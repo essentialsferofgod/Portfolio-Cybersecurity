@@ -1,0 +1,31 @@
+---
+/**
+ * Moldura comum das seções numeradas: rótulo `01 / SERVIÇOS` com filete até a borda,
+ * link discreto de volta ao terminal, título nas colunas 1–4 e conteúdo nas colunas 5–12.
+ */
+import type { SecaoNumerada } from '../content/comandos.ts';
+import Seta from './Seta.astro';
+
+interface Props {
+  secao: SecaoNumerada;
+}
+
+const { secao } = Astro.props;
+const idTitulo = `${secao.id}-titulo`;
+---
+
+<section id={secao.id} aria-labelledby={idTitulo} class="mt-(--espaco-secao)">
+  <div class="grade">
+    <div class="col-span-full flex items-center gap-4">
+      <p class="rotulo tabular uppercase" aria-hidden="true">{secao.numero} / {secao.rotulo}</p>
+      <span class="h-px flex-1 bg-line" aria-hidden="true"></span>
+      <a href="#terminal" class="link-discreto">
+        <Seta direcao="cima" /><span class="sr-only">voltar ao</span> terminal
+      </a>
+    </div>
+    <h2 id={idTitulo} class="text-h2 col-span-full mt-6 lg:col-span-4 lg:mt-10 lg:pr-6">{secao.titulo}</h2>
+    <div class="col-span-full mt-10 lg:col-span-8 lg:col-start-5 lg:mt-10">
+      <slot />
+    </div>
+  </div>
+</section>

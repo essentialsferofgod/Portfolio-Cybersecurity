@@ -1,0 +1,137 @@
+---
+/**
+ * 01 Serviços. Cada item mostra título e problema; os detalhes ficam em <details>
+ * abaixo de 1024 px e abertos acima. Com 1 ou 2 serviços, tudo fica aberto.
+ * A versão aberta e a recolhida coexistem no HTML, cada uma oculta (display: none)
+ * na largura que não lhe cabe: funciona sem JS, sem deslocamento de layout e com o
+ * estado de <details> sempre coerente com o que está visível.
+ */
+import type { SecaoNumerada } from '../content/comandos.ts';
+import type { Conteudo } from '../lib/conteudo.ts';
+import DetalhesServico from './DetalhesServico.astro';
+import Secao from './Secao.astro';
+import Texto from './Texto.astro';
+
+interface Props {
+  secao: SecaoNumerada;
+  conteudo: Conteudo;
+}
+
+const { secao, conteudo } = Astro.props;
+const { dados, renderizadas } = conteudo;
+const recolher = dados.servicos.length > 2;
+---
+
+<Secao secao={secao}>
+  <p class="rotulo tabular">{`${dados.servicos.length} ${dados.servicos.length === 1 ? 'serviço' : 'serviços'}`}</p>
+  <ol class="servicos mt-4" role="list">
+    {
+      dados.servicos.map((servico, i) => (
+        <li class="servico">
+          <span class="rotulo tabular pt-[0.35rem]" aria-hidden="true">
+            {String(i + 1).padStart(2, '0')}
+          </span>
+          <div class="min-w-0">
+            <h3 class="text-h3">
+              <Texto valor={servico.titulo} />
+            </h3>
+            <p class="mt-2 max-w-[66ch] text-text-muted">
+              <Texto valor={servico.problema} />
+            </p>
+            {recolher ? (
+              <>
+                <details class="detalhes mt-4 lg:hidden">
+                  <summary>
+                    <span>
+                      detalhes<span class="sr-only"> de {servico.titulo}</span>
+                    </span>
+                    <span class="indicador" aria-hidden="true" />
+                  </summary>
+                  <div class="pt-4">
+                    <DetalhesServico servico={servico} dados={dados} />
+                  </div>
+                </details>
+                <div class="mt-6 hidden lg:block">
+                  <DetalhesServico servico={servico} dados={dados} />
+                </div>
+              </>
+            ) : (
+              <div class="mt-6">
+                <DetalhesServico servico={servico} dados={dados} />
+              </div>
+            )}
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+  {
+    renderizadas.has('contato') && (
+      <a href="#contato" class="botao botao-contorno mt-10 w-full sm:w-auto">
+        Falar com a equipe
+      </a>
+    )
+  }
+</Secao>
+
+<style>
+  .servico {
+    display: grid;
+    grid-template-columns: 3.5ch minmax(0, 1fr);
+    gap: 0 1rem;
+    padding-block: 2rem;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .servico:last-child {
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  @media (width >= 64rem) {
+    .servico {
+      grid-template-columns: 5ch minmax(0, 1fr);
+      padding-block: 2.5rem;
+    }
+  }
+
+  .detalhes summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 2.75rem;
+    border-top: 1px dashed var(--color-line);
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .detalhes summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .detalhes summary:hover {
+    color: var(--color-text);
+  }
+
+  .indicador::before {
+    content: '+' / '';
+    font-family: var(--font-mono);
+  }
+
+  .detalhes[open] .indicador::before {
+    content: '−' / '';
+  }
+
+  .detalhes[open] > div {
+    animation: aparecer 160ms var(--ease-saida);
+  }
+
+  @keyframes aparecer {
+    from {
+      opacity: 0;
+    }
+  }
+</style>

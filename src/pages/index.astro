@@ -1,0 +1,53 @@
+---
+import Abordagem from '../components/Abordagem.astro';
+import Confianca from '../components/Confianca.astro';
+import Contato from '../components/Contato.astro';
+import Faq from '../components/Faq.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/Hero.astro';
+import Servicos from '../components/Servicos.astro';
+import Sobre from '../components/Sobre.astro';
+import StatusLine from '../components/StatusLine.astro';
+import Base from '../layouts/Base.astro';
+import { carregarConteudo, slug } from '../lib/conteudo.ts';
+import { dadosEstruturados, descricaoPagina, tituloPagina, urlDoSite } from '../lib/seo.ts';
+
+const conteudo = carregarConteudo();
+const { dados } = conteudo;
+const site = urlDoSite(dados);
+---
+
+<Base
+  titulo={tituloPagina(dados)}
+  descricao={descricaoPagina(dados)}
+  nomeSite={dados.nome}
+  url={site ? `${site}/` : undefined}
+  favicon={dados.marca.favicon}
+  jsonLd={dadosEstruturados(conteudo, site)}
+>
+  <Header nome={dados.nome} secoes={conteudo.secoes} logo={dados.marca.logo} />
+  <main id="conteudo" tabindex="-1" class="focus:outline-none">
+    <Hero conteudo={conteudo} />
+    {
+      conteudo.secoes.map((secao) => {
+        switch (secao.id) {
+          case 'servicos':
+            return <Servicos secao={secao} conteudo={conteudo} />;
+          case 'abordagem':
+            return <Abordagem secao={secao} dados={dados} />;
+          case 'sobre':
+            return <Sobre secao={secao} dados={dados} />;
+          case 'confianca':
+            return <Confianca secao={secao} dados={dados} />;
+          case 'faq':
+            return <Faq secao={secao} dados={dados} />;
+          case 'contato':
+            return <Contato secao={secao} conteudo={conteudo} />;
+        }
+      })
+    }
+  </main>
+  <Footer dados={dados} />
+  <StatusLine caminho={`~/${slug(dados.nome) || 'organizacao'}`} secoes={conteudo.secoes} />
+</Base>

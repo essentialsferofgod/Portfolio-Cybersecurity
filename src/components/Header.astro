@@ -1,0 +1,202 @@
+---
+import type { SecaoNumerada } from '../content/comandos.ts';
+import Texto from './Texto.astro';
+
+interface Props {
+  nome: string;
+  secoes: SecaoNumerada[];
+  /** Caminho, dentro de public/, da logo fornecida pela organização. */
+  logo?: string | undefined;
+  /** Fora da página inicial (404), os links apontam para "/#secao". */
+  inicio?: string;
+}
+
+const { nome, secoes, logo, inicio = '' } = Astro.props;
+const temContato = secoes.some((s) => s.id === 'contato');
+---
+
+<header class="fixed inset-x-0 top-0 z-50 border-b border-line bg-bg">
+  <div class="moldura flex h-(--altura-cabecalho) items-center gap-4 sm:gap-6">
+    <a
+      href={inicio || '#topo'}
+      class="min-w-0 flex-1 truncate text-[1.0625rem] font-semibold tracking-[-0.01em] no-underline xl:max-w-[18rem] xl:flex-none"
+    >
+      {logo ? <img src={logo} alt={nome} class="h-8 w-auto" /> : <Texto valor={nome} />}
+    </a>
+    {
+      secoes.length > 0 && (
+        <nav aria-label="Seções" class="hidden xl:ml-auto xl:block">
+          <ul class="flex gap-6">
+            {secoes.map((s) => (
+              <li>
+                <a
+                  href={`${inicio}#${s.id}`}
+                  class="link-menu rotulo"
+                  data-link-secao={s.id}
+                  data-numero={s.numero}
+                  data-rotulo={s.rotulo}
+                >
+                  <span class="tabular">{s.numero}</span> {s.rotulo}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )
+    }
+    {
+      temContato && (
+        <a href={`${inicio}#contato`} class="botao botao-contorno hidden sm:inline-flex">
+          Falar com a equipe
+        </a>
+      )
+    }
+    {
+      secoes.length > 0 && (
+        <button
+          id="botao-menu"
+          type="button"
+          class="botao-menu xl:hidden"
+          aria-expanded="false"
+          aria-controls="menu-navegacao"
+          hidden
+        >
+          menu
+          <span class="indicador" aria-hidden="true" />
+        </button>
+      )
+    }
+  </div>
+
+  {
+    secoes.length > 0 && (
+      <div id="menu-navegacao" class="menu-painel xl:hidden" hidden>
+        <nav aria-label="Seções" class="moldura py-4">
+          <ul>
+            {secoes.map((s) => (
+              <li>
+                <a href={`${inicio}#${s.id}`} class="link-menu-painel" data-link-secao={s.id}>
+                  <span class="rotulo tabular">{s.numero}</span>
+                  {s.titulo}
+                </a>
+              </li>
+            ))}
+          </ul>
+          {temContato && (
+            <a href={`${inicio}#contato`} class="botao botao-claro mt-6 w-full">
+              Falar com a equipe
+            </a>
+          )}
+        </nav>
+      </div>
+    )
+  }
+</header>
+
+<script>
+  import { iniciarNavegacao } from '../lib/navegacao.ts';
+
+  iniciarNavegacao();
+</script>
+
+<style>
+  .link-menu {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 1ch;
+    min-height: 2.75rem;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color 160ms var(--ease-saida);
+  }
+
+  .link-menu:hover,
+  .link-menu[aria-current='true'] {
+    color: var(--color-text);
+  }
+
+  /* Marca de seção ativa em --accent (seção 7.4). */
+  .link-menu[aria-current='true']::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0.5rem;
+    left: 0;
+    height: 2px;
+    background-color: var(--color-accent);
+  }
+
+  .botao-menu {
+    display: inline-flex;
+    align-items: center;
+    gap: 1ch;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0 0.75rem;
+    border: 1px solid var(--color-text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    cursor: pointer;
+  }
+
+  .botao-menu[hidden] {
+    display: none;
+  }
+
+  .botao-menu[aria-expanded='true'] {
+    border-color: var(--color-text);
+  }
+
+  .indicador::before {
+    content: '+' / '';
+    color: var(--color-text-muted);
+  }
+
+  .botao-menu[aria-expanded='true'] .indicador::before {
+    content: '−' / '';
+  }
+
+  .menu-painel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    max-height: calc(100dvh - var(--altura-cabecalho));
+    overflow-y: auto;
+    border-bottom: 1px solid var(--color-line);
+    background-color: var(--color-bg);
+  }
+
+  .menu-painel[hidden] {
+    display: none;
+  }
+
+  .link-menu-painel {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    min-height: 3rem;
+    padding-block: 0.75rem;
+    border-bottom: 1px solid var(--color-line);
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .link-menu-painel .rotulo {
+    width: 2ch;
+  }
+
+  .link-menu-painel[aria-current='true'] .rotulo {
+    color: var(--color-accent);
+  }
+
+  /* Estilos com escopo ficam fora das camadas do Tailwind e venceriam xl:hidden. */
+  @media (width >= 80rem) {
+    .botao-menu,
+    .menu-painel {
+      display: none;
+    }
+  }
+</style>

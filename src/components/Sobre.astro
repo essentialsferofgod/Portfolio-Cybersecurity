@@ -1,0 +1,62 @@
+---
+/** 03 Sobre: texto de até 66ch ao lado de pares chave-valor (atuação, público). */
+import type { SecaoNumerada } from '../content/comandos.ts';
+import type { Organizacao } from '../content/schema.ts';
+import Secao from './Secao.astro';
+import Texto from './Texto.astro';
+
+interface Props {
+  secao: SecaoNumerada;
+  dados: Organizacao;
+}
+
+const { secao, dados } = Astro.props;
+const paragrafos = (dados.sobre ?? '').split(/\n\s*\n/).filter(Boolean);
+const pares = [
+  { chave: 'atuação', valor: dados.atuacao },
+  { chave: 'público', valor: dados.publicoAlvo },
+].filter((par): par is { chave: string; valor: string } => Boolean(par.valor));
+---
+
+<Secao secao={secao}>
+  <div class="grid gap-10 lg:grid-cols-8 lg:gap-x-(--calha)">
+    <div class="flex max-w-[66ch] flex-col gap-4 lg:col-span-5">
+      {
+        paragrafos.map((p) => (
+          <p>
+            <Texto valor={p.trim()} />
+          </p>
+        ))
+      }
+    </div>
+    {
+      pares.length > 0 && (
+        <dl class="pares pares-sobre lg:col-span-3">
+          {pares.map((par) => (
+            <div>
+              <dt>{par.chave}:</dt>
+              <dd>
+                <Texto valor={par.valor} />
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )
+    }
+  </div>
+</Secao>
+
+<style>
+  .pares-sobre {
+    align-content: start;
+    gap: 1.25rem;
+  }
+
+  /* Coluna estreita: chave sempre acima do valor. */
+  @media (width >= 64rem) {
+    .pares-sobre > div {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.125rem;
+    }
+  }
+</style>

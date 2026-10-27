@@ -1,0 +1,23 @@
+---
+/**
+ * Exibe um valor do conteúdo. Pendências ("PENDENTE: …") aparecem com borda tracejada
+ * e o rótulo [pendente]; só existem em desenvolvimento, porque o portão barra o build.
+ */
+import { ehPendente, PREFIXO_PENDENTE } from '../content/schema.ts';
+
+interface Props {
+  valor: string;
+}
+
+const { valor } = Astro.props;
+---
+
+{
+  ehPendente(valor) ? (
+    <span class="pendente">
+      <span class="pendente-rotulo">[pendente]</span> {valor.slice(PREFIXO_PENDENTE.length).trim()}
+    </span>
+  ) : (
+    valor
+  )
+}

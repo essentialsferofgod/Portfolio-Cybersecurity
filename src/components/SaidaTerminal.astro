@@ -1,0 +1,72 @@
+---
+/** Renderiza as linhas de saída geradas por gerarSaida() (src/lib/terminal.ts). */
+import type { LinhaSaida } from '../lib/terminal.ts';
+import Seta from './Seta.astro';
+import Texto from './Texto.astro';
+
+interface Props {
+  linhas: LinhaSaida[];
+}
+
+const { linhas } = Astro.props;
+---
+
+{
+  linhas.map((linha) => {
+    switch (linha.tipo) {
+      case 'texto':
+        return (
+          <p class:list={[{ suave: linha.suave }]}>
+            <Texto valor={linha.texto} />
+          </p>
+        );
+      case 'itens':
+        return (
+          <ul class="itens" role="list">
+            {linha.itens.map((item) => (
+              <li>
+                {item.indice && (
+                  <span class="indice tabular" aria-hidden="true">
+                    {item.indice}
+                  </span>
+                )}
+                {item.rotulo && <span class="rotulo-item">{item.rotulo}</span>}
+                {item.href ? (
+                  <a href={item.href}>
+                    <Texto valor={item.texto} />
+                    {item.externo && <Seta direcao="diagonal" />}
+                  </a>
+                ) : (
+                  <span>
+                    <Texto valor={item.texto} />
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        );
+      case 'link':
+        return (
+          <p>
+            <a href={linha.href} class="link-saida">
+              <Seta />
+              {linha.texto}
+            </a>
+          </p>
+        );
+      case 'comandos':
+        return (
+          <ul class="lista-comandos" role="list">
+            {linha.comandos.map((c) => (
+              <li>
+                <button type="button" class="botao-comando" data-comando={c.nome}>
+                  {c.nome}
+                </button>
+                <span class="descricao">{c.descricao}</span>
+              </li>
+            ))}
+          </ul>
+        );
+    }
+  })
+}

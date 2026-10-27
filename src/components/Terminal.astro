@@ -1,0 +1,393 @@
+---
+/**
+ * Terminal de navegação (seção 9): um índice e um atalho de contato, não um shell.
+ *
+ * Estados (data-estado): sem-js → inicial → digitando | executado | erro.
+ * Sem JavaScript, só a saída estática de `help` aparece, como links; campo e chips ficam ocultos.
+ * As saídas de cada comando são geradas no build e guardadas em <template>; terminal-dom.ts
+ * só as clona. A altura do corpo é fixa, então a troca de estado não desloca o layout.
+ */
+import type { Conteudo } from '../lib/conteudo.ts';
+import { linkCanal, ROTULO_CANAL } from '../lib/conteudo.ts';
+import { CANAIS } from '../content/schema.ts';
+import { gerarSaida, type ContextoSaida } from '../lib/terminal.ts';
+import SaidaTerminal from './SaidaTerminal.astro';
+
+interface Props {
+  conteudo: Conteudo;
+}
+
+const { dados, secoes, comandos } = Astro.props.conteudo;
+
+const contexto: ContextoSaida = {
+  comandos,
+  secoes,
+  servicos: dados.servicos,
+  abordagem: dados.abordagem,
+  sobre: dados.sobre,
+  faq: dados.faq,
+  canais: CANAIS.flatMap((canal) => {
+    const link = linkCanal(canal, dados);
+    return link ? [{ rotulo: ROTULO_CANAL[canal], exibicao: link.exibicao, href: link.href, externo: link.externo }] : [];
+  }),
+};
+
+const atalhos = comandos.flatMap((comando) => {
+  const secao = secoes.find((s) => s.id === comando.secao);
+  return secao ? [{ comando, secao }] : [];
+});
+const comandosCliente = JSON.stringify(comandos.map(({ nome, aliases, descricao }) => ({ nome, aliases, descricao })));
+const saidas = comandos.filter((c) => c.nome !== 'clear').map((c) => ({ nome: c.nome, linhas: gerarSaida(c.nome, contexto) }));
+---
+
+<section id="terminal" class="terminal" aria-labelledby="terminal-titulo" data-estado="sem-js" data-comandos={comandosCliente}>
+  <h2 id="terminal-titulo" class="sr-only">Terminal de navegação</h2>
+  <p class="terminal-cabecalho" aria-hidden="true">terminal · navegação</p>
+  <div class="terminal-corpo">
+    <div class="terminal-saida" role="group" tabindex="0" aria-label="Saída do terminal">
+      <div class="bloco somente-sem-js">
+        <p class="suave">índice da página</p>
+        <ul class="atalhos" role="list">
+          {
+            atalhos.map(({ comando, secao }) => (
+              <li>
+                <a href={`#${secao.id}`}>
+                  <span class="comando">{comando.nome}</span>
+                  <span class="descricao">{comando.descricao}</span>
+                  <span class="indice tabular" aria-hidden="true">
+                    {secao.numero}
+                  </span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <div class="bloco somente-com-js">
+        <p>terminal de navegação. digite um comando ou use os atalhos abaixo.</p>
+        <SaidaTerminal linhas={gerarSaida('help', contexto)} />
+      </div>
+      <div class="registro" role="log" aria-live="polite" aria-label="Resultados dos comandos"></div>
+    </div>
+
+    <form class="terminal-entrada somente-com-js" action="#terminal" novalidate>
+      <label for="terminal-campo" class="sr-only">Comando</label>
+      <span class="prompt" aria-hidden="true">$</span>
+      <input
+        id="terminal-campo"
+        class="terminal-campo"
+        type="text"
+        name="comando"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded="false"
+        aria-controls="terminal-sugestoes"
+        aria-describedby="terminal-instrucoes"
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false"
+        enterkeyhint="go"
+        maxlength="64"
+      />
+      <ul id="terminal-sugestoes" class="sugestoes" role="listbox" aria-label="Sugestões de comando" hidden></ul>
+      <p id="terminal-instrucoes" class="sr-only">
+        Digite um comando, como ajuda, e pressione Enter. Todo o conteúdo também está no menu.
+      </p>
+    </form>
+
+    <ul class="chips somente-com-js" role="list" aria-label="Atalhos de comando">
+      {
+        comandos.map((c) => (
+          <li>
+            <button type="button" class="chip" data-comando={c.nome}>
+              {c.nome}
+            </button>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  {
+    saidas.map((saida) => (
+      <template data-saida={saida.nome}>
+        <SaidaTerminal linhas={saida.linhas} />
+      </template>
+    ))
+  }
+</section>
+
+<script>
+  import { iniciarTerminal } from '../lib/terminal-dom.ts';
+
+  const raiz = document.getElementById('terminal');
+  if (raiz) iniciarTerminal(raiz);
+</script>
+
+<style is:global>
+  .terminal {
+    border: 1px solid var(--color-line);
+    background-color: var(--color-surface);
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    line-height: var(--text-mono--line-height);
+  }
+
+  .terminal[data-estado='sem-js'] .somente-com-js,
+  .terminal:not([data-estado='sem-js']) .somente-sem-js {
+    display: none;
+  }
+
+  .terminal-cabecalho {
+    padding: 0.625rem 1rem;
+    border-bottom: 1px solid var(--color-line);
+    font-size: var(--text-rotulo);
+    color: var(--color-text-muted);
+  }
+
+  .terminal-corpo {
+    display: flex;
+    flex-direction: column;
+    height: 28rem;
+  }
+
+  .terminal-saida {
+    flex: 1;
+    min-height: 0;
+    padding: 1rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    overflow-wrap: anywhere;
+  }
+
+  .terminal-saida:focus-visible {
+    outline-offset: -2px;
+  }
+
+  .terminal .registro > .bloco {
+    margin-top: 1.25rem;
+  }
+
+  .terminal .registro > .bloco {
+    animation: terminal-entrada 160ms var(--ease-saida);
+  }
+
+  @keyframes terminal-entrada {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .terminal .bloco > * + * {
+    margin-top: 0.25rem;
+  }
+
+  .terminal .suave,
+  .terminal .descricao,
+  .terminal .indice,
+  .terminal .rotulo-item {
+    color: var(--color-text-muted);
+  }
+
+  .terminal .eco {
+    color: var(--color-text);
+  }
+
+  .terminal .prompt {
+    color: var(--color-accent);
+  }
+
+  .terminal .erro {
+    color: var(--color-error);
+  }
+
+  .terminal .comando {
+    color: var(--color-text);
+  }
+
+  .terminal .itens li {
+    display: flex;
+    gap: 1ch;
+    padding-left: 2ch;
+  }
+
+  .terminal .itens .indice {
+    flex: none;
+  }
+
+  .terminal .rotulo-item {
+    flex: none;
+    min-width: 9ch;
+  }
+
+  .terminal .itens a,
+  .terminal .link-saida {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5ch;
+    min-height: 1.5rem;
+    color: var(--color-text);
+    text-decoration: underline;
+    text-decoration-color: var(--color-text-muted);
+  }
+
+  .terminal .itens a:hover,
+  .terminal .link-saida:hover {
+    text-decoration-color: var(--color-text);
+  }
+
+  .terminal .itens .seta,
+  .terminal .link-saida .seta {
+    align-self: center;
+  }
+
+  .terminal .lista-comandos li {
+    display: grid;
+    grid-template-columns: 10ch minmax(0, 1fr);
+    gap: 1ch;
+    align-items: baseline;
+    padding-left: 2ch;
+  }
+
+  .terminal .botao-comando {
+    justify-self: start;
+    min-height: 1.5rem;
+    color: var(--color-text);
+    text-decoration: underline;
+    text-decoration-color: var(--color-text-muted);
+    cursor: pointer;
+  }
+
+  .terminal .botao-comando:hover {
+    text-decoration-color: var(--color-text);
+  }
+
+  /* Estado sem-js: índice com alvos de toque de 44 px. */
+  .terminal .atalhos {
+    margin-top: 0.75rem;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .terminal .atalhos a {
+    display: grid;
+    grid-template-columns: 10ch minmax(0, 1fr) auto;
+    gap: 1ch;
+    align-items: center;
+    min-height: 2.75rem;
+    border-bottom: 1px solid var(--color-line);
+    text-decoration: none;
+  }
+
+  .terminal .atalhos a:hover .comando {
+    text-decoration: underline;
+  }
+
+  /* Campo */
+  .terminal-entrada {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1ch;
+    margin: 0 1rem;
+    border: 1px solid var(--color-text-muted);
+    padding: 0 0.75rem;
+  }
+
+  .terminal-entrada:focus-within {
+    border-color: var(--color-text);
+  }
+
+  .terminal-campo {
+    flex: 1;
+    min-width: 0;
+    min-height: 2.75rem;
+    background: transparent;
+    color: var(--color-text);
+    font: inherit;
+    font-size: var(--text-entrada);
+    caret-color: var(--color-accent);
+  }
+
+  /* O anel de foco fica na moldura do campo, não no input. */
+  .terminal-campo:focus-visible {
+    outline: none;
+  }
+
+  .terminal-entrada:has(.terminal-campo:focus-visible) {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  @media (forced-colors: active) {
+    .terminal-entrada:has(.terminal-campo:focus-visible) {
+      outline-color: Highlight;
+    }
+  }
+
+  .sugestoes {
+    position: absolute;
+    right: -1px;
+    bottom: calc(100% + 0.25rem);
+    left: -1px;
+    z-index: 2;
+    border: 1px solid var(--color-text-muted);
+    background-color: var(--color-surface);
+  }
+
+  .sugestao {
+    display: grid;
+    grid-template-columns: 10ch minmax(0, 1fr);
+    gap: 1ch;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0 0.75rem;
+    cursor: pointer;
+  }
+
+  .sugestao:hover,
+  .sugestao[aria-selected='true'] {
+    background-color: var(--color-bg);
+  }
+
+  .sugestao[aria-selected='true'] .comando::before {
+    content: '› ' / '';
+    color: var(--color-accent);
+  }
+
+  @media (forced-colors: active) {
+    .sugestao[aria-selected='true'] {
+      outline: 2px solid Highlight;
+      outline-offset: -2px;
+    }
+  }
+
+  /* Chips: caminho principal no celular; quebram linha, sem rolagem horizontal. */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem 1rem;
+  }
+
+  .chip {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0 0.75rem;
+    border: 1px solid var(--color-text-muted);
+    color: var(--color-text);
+    font-size: var(--text-rotulo);
+    cursor: pointer;
+    transition:
+      background-color 160ms var(--ease-saida),
+      color 160ms var(--ease-saida);
+  }
+
+  /* Só com ponteiro real: no toque, o hover ficaria "preso" depois do toque. */
+  @media (hover: hover) {
+    .chip:hover {
+      background-color: var(--color-text);
+      color: var(--color-bg);
+    }
+  }
+</style>

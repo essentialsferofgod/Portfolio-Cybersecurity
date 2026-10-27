@@ -1,0 +1,63 @@
+---
+import '../styles/global.css';
+import { serializarJsonLd } from '../lib/seo.ts';
+
+interface Props {
+  titulo: string;
+  descricao: string;
+  nomeSite: string;
+  /** URL absoluta da página; só existe com domínio próprio (seção 12). */
+  url?: string | undefined;
+  favicon?: string | undefined;
+  jsonLd?: object[];
+  indexavel?: boolean;
+}
+
+const { titulo, descricao, nomeSite, url, favicon, jsonLd = [], indexavel = true } = Astro.props;
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titulo}</title>
+    <meta name="description" content={descricao} />
+    {!indexavel && <meta name="robots" content="noindex" />}
+    {url && <link rel="canonical" href={url} />}
+    <!-- theme-color igual a --color-bg -->
+    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="color-scheme" content="dark" />
+    <!-- Só a fonte do h1 é pré-carregada (seção 7.3). -->
+    <link rel="preload" href="/fonts/schibsted-grotesk-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
+    {
+      favicon ? (
+        <link rel="icon" href={favicon} />
+      ) : (
+        // Sem favicon fornecido: ícone vazio evita o pedido automático a /favicon.ico (404 no console).
+        <link rel="icon" href="data:," />
+      )
+    }
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content={nomeSite} />
+    <meta property="og:title" content={titulo} />
+    <meta property="og:description" content={descricao} />
+    {url && <meta property="og:url" content={url} />}
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={titulo} />
+    <meta name="twitter:description" content={descricao} />
+
+    {
+      jsonLd.map((dados) => (
+        // Bloco de dados, não executável: a CSP (script-src) não se aplica a ele.
+        <script type="application/ld+json" is:inline set:html={serializarJsonLd(dados)} />
+      ))
+    }
+  </head>
+  <body>
+    <a class="pular-conteudo" href="#conteudo">Pular para o conteúdo</a>
+    <slot />
+  </body>
+</html>

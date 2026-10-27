@@ -1,0 +1,41 @@
+---
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import Seta from '../components/Seta.astro';
+import Texto from '../components/Texto.astro';
+import Base from '../layouts/Base.astro';
+import { carregarConteudo, slug } from '../lib/conteudo.ts';
+import { cortar } from '../lib/seo.ts';
+
+const conteudo = carregarConteudo();
+const { dados } = conteudo;
+---
+
+<Base
+  titulo={cortar(`Página não encontrada — ${dados.nome}`, 60)}
+  descricao="O endereço acessado não existe nesta página."
+  nomeSite={dados.nome}
+  favicon={dados.marca.favicon}
+  indexavel={false}
+>
+  <Header nome={dados.nome} secoes={conteudo.secoes} logo={dados.marca.logo} inicio="/" />
+  <main id="conteudo" tabindex="-1" class="focus:outline-none">
+    <section class="pt-[calc(var(--altura-cabecalho)+1.5rem)]" aria-labelledby="titulo-principal">
+      <div class="grade">
+        <p id="topo" class="rotulo col-span-full border-b border-line pb-3">~/{slug(dados.nome) || 'organizacao'}</p>
+        <div class="col-span-full mt-12 lg:col-span-8 lg:mt-24">
+          <p class="font-mono text-mono text-error">erro 404: caminho não encontrado</p>
+          <h1 id="titulo-principal" class="text-h2 mt-4">Esta página não existe.</h1>
+          <p class="mt-4 max-w-[56ch] text-text-muted">
+            O endereço pode ter sido digitado errado ou não existir mais. O conteúdo de <Texto valor={dados.nome} /> está todo
+            na página inicial.
+          </p>
+          <a href="/" class="botao botao-contorno mt-10">
+            Ir para o início <Seta />
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer dados={dados} />
+</Base>

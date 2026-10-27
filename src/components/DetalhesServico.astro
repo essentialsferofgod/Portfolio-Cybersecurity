@@ -1,0 +1,51 @@
+---
+import type { Organizacao, Servico } from '../content/schema.ts';
+import { ACAO_CANAL, linkProximoPasso } from '../lib/conteudo.ts';
+import Seta from './Seta.astro';
+import Texto from './Texto.astro';
+
+interface Props {
+  servico: Servico;
+  dados: Organizacao;
+}
+
+const { servico, dados } = Astro.props;
+const passo = linkProximoPasso(servico.proximoPasso, dados);
+---
+
+<dl class="pares">
+  <div>
+    <dt>para:</dt>
+    <dd><Texto valor={servico.paraQuem} /></dd>
+  </div>
+  <div>
+    <dt>inclui:</dt>
+    <dd>
+      <ul class="lista-traco" role="list">
+        {
+          servico.inclui.map((item) => (
+            <li>
+              <Texto valor={item} />
+            </li>
+          ))
+        }
+      </ul>
+    </dd>
+  </div>
+  <div>
+    <dt>próximo passo:</dt>
+    <dd>
+      {
+        passo.href ? (
+          <a href={passo.href} class="link-acao">
+            {servico.proximoPasso.texto}
+            {passo.canal && <span class="sr-only">({ACAO_CANAL[passo.canal]})</span>}
+            <Seta direcao={passo.externo ? 'diagonal' : 'direita'} />
+          </a>
+        ) : (
+          <Texto valor={`PENDENTE: canal "${passo.canal}" para o próximo passo`} />
+        )
+      }
+    </dd>
+  </div>
+</dl>

@@ -1,0 +1,42 @@
+{
+  "name": "landing-ciberseguranca-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.23.4"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "dev:minimo": "node scripts/com-fixture.ts minimo astro dev",
+    "dev:completo": "node scripts/com-fixture.ts completo astro dev",
+    "dev:extremo": "node scripts/com-fixture.ts extremo astro dev",
+    "build": "node scripts/verificar-pendencias.ts && astro build",
+    "build:verificacao": "node scripts/build-verificacao.ts",
+    "preview": "astro preview",
+    "check": "astro check",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "verificar": "npm run check && npm test && npm run verificar:contraste && npm run build:verificacao && npm run verificar:build && npm run test:e2e",
+    "verificar:build": "node scripts/verificar-build.ts",
+    "verificar:contraste": "node scripts/verificar-contraste.ts",
+    "verificar:lighthouse": "node scripts/lighthouse.ts",
+    "verificar:pendencias": "node scripts/verificar-pendencias.ts"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "4.3.3",
+    "astro": "7.4.2",
+    "tailwindcss": "4.3.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.12",
+    "@axe-core/playwright": "4.14.0",
+    "@fontsource/jetbrains-mono": "5.3.0",
+    "@fontsource/schibsted-grotesk": "5.3.0",
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.19.2",
+    "lighthouse": "13.5.0",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

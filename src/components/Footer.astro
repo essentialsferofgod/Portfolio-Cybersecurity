@@ -1,0 +1,65 @@
+---
+import type { Organizacao } from '../content/schema.ts';
+import Seta from './Seta.astro';
+import Texto from './Texto.astro';
+
+interface Props {
+  dados: Organizacao;
+  /** Destino do link "voltar ao topo"; na 404 aponta para o início. */
+  topo?: string;
+}
+
+const { dados, topo = '#topo' } = Astro.props;
+const institucional = [
+  { chave: 'razão social', valor: dados.razaoSocial },
+  { chave: 'cnpj', valor: dados.cnpj },
+].filter((par): par is { chave: string; valor: string } => Boolean(par.valor));
+const politica = dados.legal.politicaPrivacidadeUrl;
+---
+
+<footer class="mt-(--espaco-secao) border-t border-line">
+  <!-- lg:pb-24 deixa espaço para a linha de status fixa no rodapé da janela. -->
+  <div class="grade gap-y-8 py-12 lg:pt-16 lg:pb-24">
+    <div class="col-span-full lg:col-span-6">
+      <p class="font-semibold"><Texto valor={dados.nome} /></p>
+      {
+        institucional.length > 0 && (
+          <dl class="pares institucional mt-4">
+            {institucional.map((par) => (
+              <div>
+                <dt>{par.chave}:</dt>
+                <dd>
+                  <Texto valor={par.valor} />
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )
+      }
+    </div>
+    <ul class="col-span-full flex flex-col items-start lg:col-span-4 lg:col-start-9 lg:items-end">
+      {
+        politica && (
+          <li>
+            <a href={politica} class="link-discreto">
+              política de privacidade <Seta direcao="diagonal" />
+            </a>
+          </li>
+        )
+      }
+      <li>
+        <a href={topo} class="link-discreto">
+          <Seta direcao="cima" /> voltar ao topo
+        </a>
+      </li>
+    </ul>
+  </div>
+</footer>
+
+<style>
+  .institucional {
+    --largura-chave: 13ch;
+    gap: 0.5rem;
+    font-size: var(--text-mono);
+  }
+</style>

@@ -1,0 +1,81 @@
+---
+/** 02 Abordagem: sequência ligada por filete, horizontal no desktop e vertical no celular. */
+import type { SecaoNumerada } from '../content/comandos.ts';
+import type { Organizacao } from '../content/schema.ts';
+import Secao from './Secao.astro';
+import Texto from './Texto.astro';
+
+interface Props {
+  secao: SecaoNumerada;
+  dados: Organizacao;
+}
+
+const { secao, dados } = Astro.props;
+---
+
+<Secao secao={secao}>
+  <ol class="etapas" role="list">
+    {
+      dados.abordagem.map((etapa, i) => (
+        <li class="etapa">
+          <span class="rotulo tabular" aria-hidden="true">
+            {String(i + 1).padStart(2, '0')}
+          </span>
+          <h3 class="text-h3 mt-2">
+            <Texto valor={etapa.etapa} />
+          </h3>
+          <p class="mt-2 text-text-muted">
+            <Texto valor={etapa.descricao} />
+          </p>
+        </li>
+      ))
+    }
+  </ol>
+</Secao>
+
+<style>
+  .etapas {
+    display: grid;
+    border-left: 1px solid var(--color-line);
+  }
+
+  .etapa {
+    position: relative;
+    min-width: 0;
+    padding: 0 0 2.5rem 1.5rem;
+    overflow-wrap: anywhere;
+  }
+
+  .etapa:last-child {
+    padding-bottom: 0;
+  }
+
+  /* Marca decorativa sobre o filete. */
+  .etapa::before {
+    content: '';
+    position: absolute;
+    top: 0.45rem;
+    left: -4px;
+    width: 7px;
+    height: 7px;
+    background-color: var(--color-detail);
+  }
+
+  @media (width >= 64rem) {
+    .etapas {
+      grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+      row-gap: 3rem;
+      border-left: 0;
+    }
+
+    .etapa {
+      padding: 1.5rem 1.5rem 0 0;
+      border-top: 1px solid var(--color-line);
+    }
+
+    .etapa::before {
+      top: -4px;
+      left: 0;
+    }
+  }
+</style>

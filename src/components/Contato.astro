@@ -1,0 +1,128 @@
+---
+/** 06 Contato: CTA principal para o canal preferencial e os canais reais como pares. */
+import type { SecaoNumerada } from '../content/comandos.ts';
+import { CANAIS } from '../content/schema.ts';
+import type { Conteudo } from '../lib/conteudo.ts';
+import { ACAO_CANAL, canalPrincipal, linkCanal, ROTULO_CANAL } from '../lib/conteudo.ts';
+import { ehPendente } from '../content/schema.ts';
+import Seta from './Seta.astro';
+import Secao from './Secao.astro';
+import Texto from './Texto.astro';
+
+interface Props {
+  secao: SecaoNumerada;
+  conteudo: Conteudo;
+}
+
+const { secao, conteudo } = Astro.props;
+const { dados } = conteudo;
+const canais = CANAIS.flatMap((canal) => linkCanal(canal, dados) ?? []);
+const principal = canalPrincipal(dados);
+const { endereco, contatoSeguranca } = dados.contato;
+---
+
+<Secao secao={secao}>
+  {
+    principal?.href && (
+      <a href={principal.href} class="botao botao-claro w-full sm:w-auto">
+        Falar com a equipe
+        <span class="sr-only">({ACAO_CANAL[principal.canal]})</span>
+        <Seta direcao={principal.externo ? 'diagonal' : 'direita'} />
+      </a>
+    )
+  }
+
+  <dl class="pares canais mt-12">
+    {
+      canais.map((link) => (
+        <div>
+          <dt>{ROTULO_CANAL[link.canal]}</dt>
+          <dd>
+            {link.href ? (
+              <a href={link.href} class="valor-canal">
+                <Seta direcao={link.externo ? 'diagonal' : 'direita'} class="text-text-muted" />
+                <span class="min-w-0">{link.exibicao}</span>
+                <span class="sr-only">({ACAO_CANAL[link.canal]})</span>
+              </a>
+            ) : (
+              <Texto valor={link.exibicao} />
+            )}
+          </dd>
+        </div>
+      ))
+    }
+    {
+      endereco && (
+        <div>
+          <dt>endereço</dt>
+          <dd class="valor-texto">
+            <Texto valor={endereco} />
+          </dd>
+        </div>
+      )
+    }
+    {
+      contatoSeguranca && (
+        <div>
+          <dt>segurança</dt>
+          <dd>
+            {ehPendente(contatoSeguranca) ? (
+              <Texto valor={contatoSeguranca} />
+            ) : (
+              <a href={`mailto:${contatoSeguranca}`} class="valor-canal">
+                <Seta class="text-text-muted" />
+                <span class="min-w-0">{contatoSeguranca}</span>
+              </a>
+            )}
+            <p class="rotulo mt-1">para relatar vulnerabilidades</p>
+          </dd>
+        </div>
+      )
+    }
+  </dl>
+</Secao>
+
+<style>
+  .canais {
+    --largura-chave: 11ch;
+    gap: 0;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .canais > div {
+    padding-block: 1rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  @media (width >= 40rem) {
+    .canais > div {
+      align-items: baseline;
+    }
+  }
+
+  .valor-canal {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    min-height: 1.5rem;
+    max-width: 100%;
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    text-decoration: underline;
+    text-decoration-color: var(--color-text-muted);
+    overflow-wrap: anywhere;
+    transition: text-decoration-color 160ms var(--ease-saida);
+  }
+
+  .valor-canal:hover {
+    text-decoration-color: var(--color-text);
+  }
+
+  .valor-canal :global(.seta) {
+    align-self: center;
+  }
+
+  .valor-texto {
+    max-width: 66ch;
+  }
+</style>

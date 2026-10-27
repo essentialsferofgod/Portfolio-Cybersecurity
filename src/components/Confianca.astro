@@ -1,0 +1,135 @@
+---
+/**
+ * 04 Confiança: tabela semântica com item, emissor e link de verificação na fonte.
+ * Abaixo de 640 px as colunas "emissor" e "verificar" somem e os dois aparecem sob o item.
+ */
+import type { SecaoNumerada } from '../content/comandos.ts';
+import type { Organizacao } from '../content/schema.ts';
+import { ehPendente } from '../content/schema.ts';
+import Seta from './Seta.astro';
+import Texto from './Texto.astro';
+import Secao from './Secao.astro';
+
+interface Props {
+  secao: SecaoNumerada;
+  dados: Organizacao;
+}
+
+const { secao, dados } = Astro.props;
+const TIPOS = { certificacao: 'certificação', caso: 'caso', outro: 'outro' } as const;
+
+function dominio(url: string): string {
+  return ehPendente(url) ? url : new URL(url).hostname.replace(/^www\./, '');
+}
+---
+
+<Secao secao={secao}>
+  <table class="tabela">
+    <caption class="sr-only">Itens de confiança, com link para verificação na fonte</caption>
+    <thead>
+      <tr>
+        <th scope="col">item</th>
+        <th scope="col" class="hidden sm:table-cell">emissor</th>
+        <th scope="col" class="hidden text-right sm:table-cell">verificar <Seta direcao="diagonal" /></th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        dados.confianca.map((item) => (
+          <tr>
+            <td>
+              <span class="rotulo block">{TIPOS[item.tipo]}</span>
+              <span class="mt-1 block">
+                <Texto valor={item.titulo} />
+              </span>
+              {item.emissor && (
+                <span class="rotulo mt-1 block sm:hidden">
+                  emissor: <Texto valor={item.emissor} />
+                </span>
+              )}
+              {!ehPendente(item.urlVerificacao) && (
+                <a href={item.urlVerificacao} class="link-acao mt-3 sm:hidden">
+                  <span>
+                    verificar<span class="sr-only"> {item.titulo}</span> em {dominio(item.urlVerificacao)}
+                  </span>
+                  <Seta direcao="diagonal" />
+                </a>
+              )}
+            </td>
+            <td class="hidden sm:table-cell">
+              {item.emissor ? (
+                <Texto valor={item.emissor} />
+              ) : (
+                <>
+                  <span aria-hidden="true">—</span>
+                  <span class="sr-only">não informado</span>
+                </>
+              )}
+            </td>
+            <td class="hidden text-right sm:table-cell">
+              {ehPendente(item.urlVerificacao) ? (
+                <Texto valor={item.urlVerificacao} />
+              ) : (
+                <a href={item.urlVerificacao} class="link-acao justify-end">
+                  <span class="sr-only">verificar {item.titulo} em </span>
+                  {dominio(item.urlVerificacao)}
+                  <Seta direcao="diagonal" />
+                </a>
+              )}
+            </td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</Secao>
+
+<style>
+  .tabela {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+  }
+
+  th {
+    padding: 0 1rem 0.75rem 0;
+    border-bottom: 1px solid var(--color-line);
+    font-family: var(--font-mono);
+    font-size: var(--text-rotulo);
+    font-weight: 400;
+    color: var(--color-text-muted);
+    text-align: left;
+    vertical-align: bottom;
+  }
+
+  th :global(.seta) {
+    display: inline-block;
+    margin-left: 0.25rem;
+    vertical-align: -0.1em;
+  }
+
+  th:last-child {
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 1.25rem 1rem 1.25rem 0;
+    border-bottom: 1px solid var(--color-line);
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+
+  /* Emissor e link alinhados ao título do item, abaixo do rótulo de tipo. */
+  td:not(:first-child) {
+    padding-top: calc(1.25rem + var(--text-rotulo) * var(--text-rotulo--line-height) + 0.25rem);
+  }
+
+  th:last-child,
+  td:last-child {
+    padding-right: 0;
+  }
+
+  .text-right {
+    text-align: right;
+  }
+</style>
