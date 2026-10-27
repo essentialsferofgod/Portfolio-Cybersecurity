@@ -64,7 +64,7 @@ const saidas = comandos.filter((c) => c.nome !== 'clear').map((c) => ({ nome: c.
         </ul>
       </div>
       <div class="bloco somente-com-js">
-        <p>terminal de navegação. digite um comando ou use os atalhos abaixo.</p>
+        <p><span class="digitando">terminal de navegação. digite um comando ou use os atalhos abaixo.</span></p>
         <SaidaTerminal linhas={gerarSaida('help', contexto)} />
       </div>
       <div class="registro" role="log" aria-live="polite" aria-label="Resultados dos comandos"></div>
@@ -167,6 +167,18 @@ const saidas = comandos.filter((c) => c.nome !== 'clear').map((c) => ({ nome: c.
 
   .terminal .registro > .bloco {
     margin-top: 1.25rem;
+  }
+
+  /* Boas-vindas "digitadas": o texto já está no DOM; só o recorte avança em passos. */
+  .terminal .digitando {
+    clip-path: inset(0 100% 0 0);
+    animation: terminal-digitar 1.8s steps(40, end) 2s forwards;
+  }
+
+  @keyframes terminal-digitar {
+    to {
+      clip-path: inset(0 0 0 0);
+    }
   }
 
   .terminal .registro > .bloco {

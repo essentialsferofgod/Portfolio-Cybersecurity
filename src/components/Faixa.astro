@@ -1,0 +1,64 @@
+---
+/**
+ * Faixa de comandos entre o hero e as seções. O deslocamento horizontal acompanha a
+ * rolagem (efeitos.ts). Decorativa: repete os títulos dos serviços, que estão na seção 01.
+ */
+import { slug } from '../lib/conteudo.ts';
+
+interface Props {
+  itens: string[];
+}
+
+const { itens } = Astro.props;
+// Repete os itens até ter largura de sobra para a volta contínua.
+const base = Array.from({ length: Math.max(1, Math.ceil(10 / Math.max(itens.length, 1))) }, () => itens).flat();
+---
+
+<div class="faixa" aria-hidden="true">
+  <div class="trilha" data-rolagem-x>
+    {
+      [0, 1].map(() => (
+        <ul>
+          {base.map((item) => (
+            <li>
+              <span class="cifrao">$</span> run {slug(item)}
+            </li>
+          ))}
+        </ul>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .faixa {
+    margin-top: var(--espaco-secao);
+    overflow: hidden;
+    border-block: 1px solid var(--color-line);
+    background-color: var(--color-surface);
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  }
+
+  .trilha {
+    display: flex;
+    width: max-content;
+    will-change: transform;
+  }
+
+  ul {
+    display: flex;
+    flex: none;
+  }
+
+  li {
+    padding: 1rem 2rem;
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    color: var(--color-text-muted);
+  }
+
+  .cifrao {
+    color: var(--color-accent);
+  }
+</style>

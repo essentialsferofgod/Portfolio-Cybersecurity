@@ -28,6 +28,8 @@ const { titulo, descricao, nomeSite, url, favicon, jsonLd = [], indexavel = true
     <!-- theme-color igual a --color-bg -->
     <meta name="theme-color" content="#0a0a0a" />
     <meta name="color-scheme" content="dark" />
+    <!-- Marca a presença de JS antes da primeira pintura (arquivo externo, compatível com a CSP). -->
+    <script is:inline src="/init.js"></script>
     <!-- Só a fonte do h1 é pré-carregada (seção 7.3). -->
     <link rel="preload" href="/fonts/schibsted-grotesk-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
     {
@@ -58,6 +60,12 @@ const { titulo, descricao, nomeSite, url, favicon, jsonLd = [], indexavel = true
   </head>
   <body>
     <a class="pular-conteudo" href="#conteudo">Pular para o conteúdo</a>
+    <div class="progresso" aria-hidden="true"></div>
     <slot />
+    <script>
+      import { iniciarEfeitos } from '../lib/efeitos.ts';
+
+      iniciarEfeitos();
+    </script>
   </body>
 </html>

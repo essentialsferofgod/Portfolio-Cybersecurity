@@ -19,9 +19,24 @@ const { dados } = conteudo;
 const canais = CANAIS.flatMap((canal) => linkCanal(canal, dados) ?? []);
 const principal = canalPrincipal(dados);
 const { endereco, contatoSeguranca } = dados.contato;
+const chamada = dados.chamadaFinal;
 ---
 
 <Secao secao={secao}>
+  {
+    chamada && (
+      <div class="mb-10">
+        <p class="destaque">
+          <Texto valor={chamada.titulo} />
+        </p>
+        {chamada.texto.map((p) => (
+          <p class="mt-4 max-w-[60ch] text-text-muted">
+            <Texto valor={p} />
+          </p>
+        ))}
+      </div>
+    )
+  }
   {
     principal?.href && (
       <a href={principal.href} class="botao botao-claro w-full sm:w-auto">
@@ -80,7 +95,62 @@ const { endereco, contatoSeguranca } = dados.contato;
       )
     }
   </dl>
+
+  {
+    dados.formularioDemo && (
+      <form class="formulario mt-12" novalidate data-formulario-demo data-estado="inicial" aria-labelledby="formulario-titulo">
+        <p id="formulario-titulo" class="destaque">Vamos falar de segurança.</p>
+        <p class="mt-3 max-w-[60ch] text-text-muted">
+          Conte sobre o seu ambiente, suas preocupações e o que precisa proteger.
+        </p>
+        <p class="rotulo mt-3">formulário de demonstração: nada é enviado nem guardado.</p>
+        <div class="campos mt-6">
+          <div class="campo">
+            <label for="f-nome">Nome</label>
+            <input id="f-nome" name="nome" type="text" autocomplete="name" data-obrigatorio aria-describedby="f-nome-erro" />
+            <p id="f-nome-erro" class="erro" />
+          </div>
+          <div class="campo">
+            <label for="f-email">E-mail corporativo</label>
+            <input id="f-email" name="email" type="email" autocomplete="email" data-obrigatorio aria-describedby="f-email-erro" />
+            <p id="f-email-erro" class="erro" />
+          </div>
+          <div class="campo">
+            <label for="f-empresa">Empresa <span class="opcional">(opcional)</span></label>
+            <input id="f-empresa" name="empresa" type="text" autocomplete="organization" />
+          </div>
+          <div class="campo">
+            <label for="f-area">Área de interesse <span class="opcional">(opcional)</span></label>
+            <select id="f-area" name="area">
+              <option value="">Selecione</option>
+              {dados.servicos.map((s) => (
+                <option>{s.titulo}</option>
+              ))}
+              <option>Outro assunto</option>
+            </select>
+          </div>
+          <div class="campo campo-largo">
+            <label for="f-mensagem">Mensagem</label>
+            <textarea id="f-mensagem" name="mensagem" rows="5" data-obrigatorio aria-describedby="f-mensagem-erro" />
+            <p id="f-mensagem-erro" class="erro" />
+          </div>
+        </div>
+        <button type="submit" class="botao botao-claro mt-6 w-full sm:w-auto">
+          Enviar mensagem <Seta />
+        </button>
+        <p class="status mt-4" role="status" />
+        <p class="rotulo mt-4">Suas informações merecem o mesmo cuidado que a sua infraestrutura.</p>
+      </form>
+    )
+  }
 </Secao>
+
+<script>
+  import { iniciarFormulario } from '../lib/formulario.ts';
+
+  const formulario = document.querySelector<HTMLFormElement>('[data-formulario-demo]');
+  if (formulario) iniciarFormulario(formulario);
+</script>
 
 <style>
   .canais {
@@ -124,5 +194,87 @@ const { endereco, contatoSeguranca } = dados.contato;
 
   .valor-texto {
     max-width: 66ch;
+  }
+
+  /* Sem JavaScript o formulário de demonstração não aparece: o contato é pelo e-mail. */
+  :global(html:not(.js)) .formulario {
+    display: none;
+  }
+
+  .formulario {
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .campos {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  @media (width >= 40rem) {
+    .campos {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .campo-largo {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .campo label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-rotulo);
+    color: var(--color-text-muted);
+  }
+
+  .opcional {
+    color: var(--color-text-muted);
+  }
+
+  .campo input,
+  .campo select,
+  .campo textarea {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--color-text-muted);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    caret-color: var(--color-accent);
+  }
+
+  .campo textarea {
+    resize: vertical;
+  }
+
+  .campo [aria-invalid='true'] {
+    border-color: var(--color-error);
+  }
+
+  .erro {
+    min-height: 1.25rem;
+    margin-top: 0.25rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-rotulo);
+    color: var(--color-error);
+  }
+
+  .status {
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    color: var(--color-text);
+  }
+
+  .formulario[data-estado='sucesso'] .status {
+    color: var(--color-accent);
+  }
+
+  .formulario[data-estado='erro'] .status {
+    color: var(--color-error);
   }
 </style>

@@ -62,7 +62,9 @@
     *::before,
     *::after {
       transition-duration: 0s !important;
+      transition-delay: 0s !important;
       animation-duration: 0s !important;
+      animation-delay: 0s !important;
       animation-iteration-count: 1 !important;
     }
   }
@@ -287,4 +289,280 @@
     letter-spacing: 0;
     color: var(--color-text-muted);
   }
+}
+
+/* ------------------------------------------------------------------------- *
+ * Animações com linguagem de terminal, ligadas à rolagem (efeitos.ts, fundo.ts).
+ * Passos discretos (steps) imitam saída impressa; nada de brilho ou gradiente.
+ * Com prefers-reduced-motion tudo aparece pronto, sem transição.
+ * ------------------------------------------------------------------------- */
+
+/* Entrada "linha a linha": só existe quando há JavaScript. */
+.js [data-revelar] {
+  opacity: 0;
+  transform: translateX(-14px);
+  transition:
+    opacity 420ms steps(7, end),
+    transform 420ms steps(7, end);
+  transition-delay: var(--atraso, 0ms);
+}
+
+.js [data-revelar].revelado,
+.revelar-tudo [data-revelar] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Cursor de bloco piscando. */
+.cursor {
+  display: inline-block;
+  width: 0.6ch;
+  height: 1.1em;
+  vertical-align: -0.2em;
+  background-color: var(--color-accent);
+  animation: piscar 1.06s steps(1) infinite;
+}
+
+@keyframes piscar {
+  50% {
+    opacity: 0;
+  }
+}
+
+.cursor-h1 {
+  width: 0.42ch;
+  height: 0.78em;
+  margin-left: 0.12em;
+  vertical-align: -0.04em;
+  opacity: 0;
+  animation: piscar-h1 1.06s steps(1) infinite 2.4s;
+}
+
+@keyframes piscar-h1 {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* H1 do hero: palavras surgem uma a uma, como digitadas. */
+.palavra {
+  animation: palavra 120ms steps(2, end) both;
+}
+
+@keyframes palavra {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Demais blocos do hero entram em sequência. */
+.entra {
+  animation: entra 520ms steps(8, end) both;
+}
+
+@keyframes entra {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+
+.entra-1 {
+  animation-delay: 1.2s;
+}
+.entra-2 {
+  animation-delay: 1.5s;
+}
+.entra-3 {
+  animation-delay: 1.8s;
+}
+
+/* Prompt de cada seção, digitado ao entrar na tela. */
+.prompt-secao {
+  min-height: 1.6em;
+  font-family: var(--font-mono);
+  font-size: var(--text-mono);
+  color: var(--color-text-muted);
+}
+
+.prompt-secao .cifrao {
+  color: var(--color-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js [data-revelar] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .cursor-h1 {
+    opacity: 1;
+  }
+}
+
+/* Barra de progresso de rolagem no topo. */
+.progresso {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 60;
+  height: 2px;
+  background-color: var(--color-accent);
+  transform: scaleX(var(--progresso, 0));
+  transform-origin: left;
+  pointer-events: none;
+}
+.palavra:nth-child(1) {
+  animation-delay: 0.34s;
+}
+.palavra:nth-child(2) {
+  animation-delay: 0.43s;
+}
+.palavra:nth-child(3) {
+  animation-delay: 0.52s;
+}
+.palavra:nth-child(4) {
+  animation-delay: 0.61s;
+}
+.palavra:nth-child(5) {
+  animation-delay: 0.70s;
+}
+.palavra:nth-child(6) {
+  animation-delay: 0.79s;
+}
+.palavra:nth-child(7) {
+  animation-delay: 0.88s;
+}
+.palavra:nth-child(8) {
+  animation-delay: 0.97s;
+}
+.palavra:nth-child(9) {
+  animation-delay: 1.06s;
+}
+.palavra:nth-child(10) {
+  animation-delay: 1.15s;
+}
+.palavra:nth-child(11) {
+  animation-delay: 1.24s;
+}
+.palavra:nth-child(12) {
+  animation-delay: 1.33s;
+}
+.palavra:nth-child(13) {
+  animation-delay: 1.42s;
+}
+.palavra:nth-child(14) {
+  animation-delay: 1.51s;
+}
+.palavra:nth-child(15) {
+  animation-delay: 1.60s;
+}
+.palavra:nth-child(16) {
+  animation-delay: 1.69s;
+}
+.palavra:nth-child(17) {
+  animation-delay: 1.78s;
+}
+.palavra:nth-child(18) {
+  animation-delay: 1.87s;
+}
+.palavra:nth-child(19) {
+  animation-delay: 1.96s;
+}
+.palavra:nth-child(20) {
+  animation-delay: 2.05s;
+}
+.palavra:nth-child(21) {
+  animation-delay: 2.14s;
+}
+.palavra:nth-child(22) {
+  animation-delay: 2.23s;
+}
+.palavra:nth-child(23) {
+  animation-delay: 2.32s;
+}
+.palavra:nth-child(24) {
+  animation-delay: 2.41s;
+}
+.palavra:nth-child(25) {
+  animation-delay: 2.50s;
+}
+.palavra:nth-child(26) {
+  animation-delay: 2.59s;
+}
+.palavra:nth-child(27) {
+  animation-delay: 2.68s;
+}
+.palavra:nth-child(28) {
+  animation-delay: 2.77s;
+}
+.palavra:nth-child(29) {
+  animation-delay: 2.86s;
+}
+.palavra:nth-child(30) {
+  animation-delay: 2.95s;
+}
+.palavra:nth-child(31) {
+  animation-delay: 3.04s;
+}
+.palavra:nth-child(32) {
+  animation-delay: 3.13s;
+}
+.palavra:nth-child(33) {
+  animation-delay: 3.22s;
+}
+.palavra:nth-child(34) {
+  animation-delay: 3.31s;
+}
+.palavra:nth-child(35) {
+  animation-delay: 3.40s;
+}
+.palavra:nth-child(36) {
+  animation-delay: 3.49s;
+}
+.palavra:nth-child(37) {
+  animation-delay: 3.58s;
+}
+.palavra:nth-child(38) {
+  animation-delay: 3.67s;
+}
+.palavra:nth-child(39) {
+  animation-delay: 3.76s;
+}
+.palavra:nth-child(40) {
+  animation-delay: 3.85s;
+}
+
+/* Barras dos números: vazias até o bloco entrar na tela. */
+.js [data-revelar]:not(.revelado) .barra > span {
+  clip-path: inset(0 100% 0 0);
+}
+
+/* Etapa destacada pela órbita da seção Abordagem. */
+.etapa-ativa h3 {
+  color: var(--color-accent);
+}
+
+/* Filete do rótulo de seção: começa recolhido e se desenha ao entrar na tela. */
+.js .cabecalho-secao:not(.revelado) .filete {
+  transform: scaleX(0);
+}
+
+/* Frase de destaque dentro das seções. */
+.destaque {
+  font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.25rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
 }

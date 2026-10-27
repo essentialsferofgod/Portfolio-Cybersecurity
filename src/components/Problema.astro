@@ -1,0 +1,37 @@
+---
+/** O problema: frase de destaque e parágrafos, entrando linha a linha. */
+import type { SecaoNumerada } from '../content/comandos.ts';
+import type { Organizacao } from '../content/schema.ts';
+import Seta from './Seta.astro';
+import Secao from './Secao.astro';
+import Texto from './Texto.astro';
+
+interface Props {
+  secao: SecaoNumerada;
+  dados: Organizacao;
+  temServicos: boolean;
+}
+
+const { secao, dados, temServicos } = Astro.props;
+const problema = dados.problema!;
+---
+
+<Secao secao={secao}>
+  <p class="destaque"><Texto valor={problema.titulo} /></p>
+  <div class="mt-6 flex max-w-[62ch] flex-col gap-4 text-text-muted">
+    {
+      problema.texto.map((p, i) => (
+        <p data-revelar data-atraso={150 + i * 150}>
+          <Texto valor={p} />
+        </p>
+      ))
+    }
+  </div>
+  {
+    temServicos && (
+      <a href="#servicos" class="link-acao mt-8">
+        descobrir o que está oculto <Seta />
+      </a>
+    )
+  }
+</Secao>

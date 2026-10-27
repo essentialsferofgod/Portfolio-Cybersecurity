@@ -12,12 +12,12 @@ for (const { nome, url } of VARIANTES) {
     await expect(page.getByRole('combobox')).toBeHidden();
     await expect(terminal.locator('.chips')).toBeHidden();
 
-    const ids = await page.locator('main section[id]:not(#terminal)').evaluateAll((s) => s.map((el) => el.id));
+    const ids = await page.locator('main section[id]:not(#terminal):not([aria-labelledby="numeros-titulo"])').evaluateAll((s) => s.map((el) => el.id));
     expect(ids.length).toBeGreaterThan(0);
     for (const id of ids) await expect(page.locator(`#${id}`)).toBeVisible();
 
     const atalhos = terminal.locator('.atalhos a');
-    await expect(atalhos).toHaveCount(ids.filter((id) => id !== 'confianca').length);
+    await expect(atalhos).toHaveCount(ids.filter((id) => !['confianca', 'depoimentos', 'problema', 'principios'].includes(id)).length);
     for (const href of await atalhos.evaluateAll((links) => links.map((a) => a.getAttribute('href')))) {
       await expect(page.locator(href!)).toBeVisible();
     }

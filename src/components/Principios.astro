@@ -1,0 +1,56 @@
+---
+/** Princípios: frase de destaque e itens em pares, como um arquivo de configuração. */
+import type { SecaoNumerada } from '../content/comandos.ts';
+import type { Organizacao } from '../content/schema.ts';
+import Secao from './Secao.astro';
+import Texto from './Texto.astro';
+
+interface Props {
+  secao: SecaoNumerada;
+  dados: Organizacao;
+}
+
+const { secao, dados } = Astro.props;
+const principios = dados.principios!;
+---
+
+<Secao secao={secao}>
+  <p class="destaque"><Texto valor={principios.titulo} /></p>
+  <p class="mt-6 max-w-[62ch] text-text-muted"><Texto valor={principios.texto} /></p>
+  <ol class="principios mt-8" role="list">
+    {
+      principios.itens.map((item, i) => (
+        <li data-revelar data-atraso={i * 140}>
+          <p class="rotulo tabular" aria-hidden="true">
+            {String(i + 1).padStart(2, '0')} —
+          </p>
+          <h3 class="text-h3 mt-2">
+            <Texto valor={item.nome} />
+          </h3>
+          <p class="mt-2 text-text-muted">
+            <Texto valor={item.descricao} />
+          </p>
+        </li>
+      ))
+    }
+  </ol>
+</Secao>
+
+<style>
+  .principios {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    border-top: 1px solid var(--color-line);
+  }
+
+  li {
+    padding: 1.5rem 1.5rem 1.5rem 0;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  li h3::before {
+    content: '# ' / '';
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+  }
+</style>

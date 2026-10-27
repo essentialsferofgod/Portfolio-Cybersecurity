@@ -26,9 +26,13 @@ export interface Conteudo {
 
 /** Regras da coluna "Renderiza quando" da seção 5. */
 const REGRAS: Record<IdSecao, (d: Organizacao) => boolean> = {
+  problema: (d) => Boolean(d.problema),
   servicos: (d) => d.servicos.length >= 1,
+  laboratorio: (d) => d.laboratorio,
+  principios: (d) => Boolean(d.principios),
   abordagem: (d) => d.abordagem.length >= 2,
   sobre: (d) => Boolean(d.sobre),
+  depoimentos: (d) => d.depoimentos.length >= 1,
   confianca: (d) => d.confianca.length >= 1,
   faq: (d) => d.faq.length >= 2,
   contato: (d) => canaisDisponiveis(d).length >= 1,

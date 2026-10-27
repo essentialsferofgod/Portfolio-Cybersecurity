@@ -46,7 +46,7 @@ function iniciarSecaoAtiva(): void {
     .filter((s): s is HTMLElement => s !== null);
   if (secoes.length === 0) return;
 
-  const total = secoes.length.toString().padStart(2, '0');
+  const total = status?.dataset.total ?? secoes.length.toString().padStart(2, '0');
   let atual: string | null | undefined;
 
   // Ativa é a última seção cujo topo já passou de 30% da altura da janela.
@@ -66,8 +66,23 @@ function iniciarSecaoAtiva(): void {
     if (status && textoStatus) {
       status.hidden = !link;
       if (link) textoStatus.textContent = `${link.dataset.numero}/${total} ${link.dataset.rotulo}`;
+      if (caminho) caminho.textContent = id ? `${caminho.dataset.base}/${id}` : (caminho.dataset.base ?? '');
     }
   }
+
+  // Barra ASCII de progresso da rolagem: [██████░░░░░░]  42%
+  const caminho = status?.querySelector<HTMLElement>('[data-status-caminho]');
+  const barra = status?.querySelector<HTMLElement>('[data-status-barra]');
+  const SEGMENTOS = 16;
+  function progresso(): void {
+    if (!barra) return;
+    const total = document.documentElement.scrollHeight - innerHeight;
+    const fracao = total > 0 ? Math.min(1, scrollY / total) : 0;
+    const cheios = Math.round(fracao * SEGMENTOS);
+    barra.textContent = `[${'█'.repeat(cheios)}${'░'.repeat(SEGMENTOS - cheios)}] ${String(Math.round(fracao * 100)).padStart(3)}%`;
+  }
+  addEventListener('scroll', () => requestAnimationFrame(progresso), { passive: true });
+  progresso();
 
   // O observador só dispara quando uma seção cruza a faixa de 30%; o cálculo usa a posição real.
   const observador = new IntersectionObserver(recalcular, { rootMargin: '-30% 0px -69% 0px' });

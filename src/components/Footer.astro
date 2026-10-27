@@ -22,6 +22,14 @@ const politica = dados.legal.politicaPrivacidadeUrl;
   <div class="grade gap-y-8 py-12 lg:pt-16 lg:pb-24">
     <div class="col-span-full lg:col-span-6">
       <p class="font-semibold"><Texto valor={dados.nome} /></p>
+      {dados.slogan && <p class="mt-1 text-text-muted"><Texto valor={dados.slogan} /></p>}
+      {
+        dados.aviso && (
+          <p class="rotulo mt-2 max-w-[60ch]">
+            <Texto valor={dados.aviso} />
+          </p>
+        )
+      }
       {
         institucional.length > 0 && (
           <dl class="pares institucional mt-4">

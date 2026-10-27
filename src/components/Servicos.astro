@@ -1,10 +1,9 @@
 ---
 /**
- * 01 Serviços. Cada item mostra título e problema; os detalhes ficam em <details>
- * abaixo de 1024 px e abertos acima. Com 1 ou 2 serviços, tudo fica aberto.
- * A versão aberta e a recolhida coexistem no HTML, cada uma oculta (display: none)
- * na largura que não lhe cabe: funciona sem JS, sem deslocamento de layout e com o
- * estado de <details> sempre coerente com o que está visível.
+ * 01 Serviços, como arquivos abertos no terminal (`servico_01.md`). Cada cartão entra
+ * "linha a linha" ao rolar. Os detalhes ficam em <details> abaixo de 1024 px e abertos
+ * acima; com 1 ou 2 serviços, tudo fica aberto. A versão aberta e a recolhida coexistem
+ * no HTML, cada uma oculta (display: none) na largura que não lhe cabe.
  */
 import type { SecaoNumerada } from '../content/comandos.ts';
 import type { Conteudo } from '../lib/conteudo.ts';
@@ -20,6 +19,7 @@ interface Props {
 const { secao, conteudo } = Astro.props;
 const { dados, renderizadas } = conteudo;
 const recolher = dados.servicos.length > 2;
+const indice = (i: number) => String(i + 1).padStart(2, '0');
 ---
 
 <Secao secao={secao}>
@@ -27,15 +27,16 @@ const recolher = dados.servicos.length > 2;
   <ol class="servicos mt-4" role="list">
     {
       dados.servicos.map((servico, i) => (
-        <li class="servico">
-          <span class="rotulo tabular pt-[0.35rem]" aria-hidden="true">
-            {String(i + 1).padStart(2, '0')}
-          </span>
-          <div class="min-w-0">
+        <li class="servico" data-revelar data-atraso={(i % 2) * 140}>
+          <p class="arquivo" aria-hidden="true">
+            <span>servico_{indice(i)}.md</span>
+            <span class="tabular">{indice(i)}</span>
+          </p>
+          <div class="corpo">
             <h3 class="text-h3">
               <Texto valor={servico.titulo} />
             </h3>
-            <p class="mt-2 max-w-[66ch] text-text-muted">
+            <p class="mt-2 text-text-muted">
               <Texto valor={servico.problema} />
             </p>
             {recolher ? (
@@ -75,23 +76,47 @@ const recolher = dados.servicos.length > 2;
 </Secao>
 
 <style>
-  .servico {
+  .servicos {
     display: grid;
-    grid-template-columns: 3.5ch minmax(0, 1fr);
-    gap: 0 1rem;
-    padding-block: 2rem;
-    border-top: 1px solid var(--color-line);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+    gap: 1rem;
   }
 
-  .servico:last-child {
+  .servico {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-surface);
+    transition: border-color 160ms var(--ease-saida);
+  }
+
+  .servico:hover {
+    border-color: var(--color-text-muted);
+  }
+
+  .arquivo {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
     border-bottom: 1px solid var(--color-line);
+    font-family: var(--font-mono);
+    font-size: var(--text-rotulo);
+    color: var(--color-text-muted);
   }
 
-  @media (width >= 64rem) {
-    .servico {
-      grid-template-columns: 5ch minmax(0, 1fr);
-      padding-block: 2.5rem;
-    }
+  .servico:hover .arquivo span:first-child::before {
+    content: '> ' / '';
+    color: var(--color-accent);
+  }
+
+  .corpo {
+    padding: 1.25rem 1rem 1.5rem;
+  }
+
+  /* Cartões estreitos: chave sempre acima do valor. */
+  .corpo :global(.pares > div) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.125rem;
   }
 
   .detalhes summary {

@@ -2,10 +2,16 @@
 import Abordagem from '../components/Abordagem.astro';
 import Confianca from '../components/Confianca.astro';
 import Contato from '../components/Contato.astro';
+import Depoimentos from '../components/Depoimentos.astro';
+import Faixa from '../components/Faixa.astro';
 import Faq from '../components/Faq.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
+import Laboratorio from '../components/Laboratorio.astro';
+import Principios from '../components/Principios.astro';
+import Problema from '../components/Problema.astro';
+import Numeros from '../components/Numeros.astro';
 import Servicos from '../components/Servicos.astro';
 import Sobre from '../components/Sobre.astro';
 import StatusLine from '../components/StatusLine.astro';
@@ -29,15 +35,25 @@ const site = urlDoSite(dados);
   <Header nome={dados.nome} secoes={conteudo.secoes} logo={dados.marca.logo} />
   <main id="conteudo" tabindex="-1" class="focus:outline-none">
     <Hero conteudo={conteudo} />
+    {dados.servicos.length > 0 && <Faixa itens={dados.servicos.map((s) => s.titulo)} />}
+    {dados.numeros.length > 0 && <Numeros dados={dados} />}
     {
       conteudo.secoes.map((secao) => {
         switch (secao.id) {
+          case 'problema':
+            return <Problema secao={secao} dados={dados} temServicos={conteudo.renderizadas.has('servicos')} />;
+          case 'laboratorio':
+            return <Laboratorio secao={secao} />;
+          case 'principios':
+            return <Principios secao={secao} dados={dados} />;
           case 'servicos':
             return <Servicos secao={secao} conteudo={conteudo} />;
           case 'abordagem':
             return <Abordagem secao={secao} dados={dados} />;
           case 'sobre':
             return <Sobre secao={secao} dados={dados} />;
+          case 'depoimentos':
+            return <Depoimentos secao={secao} dados={dados} />;
           case 'confianca':
             return <Confianca secao={secao} dados={dados} />;
           case 'faq':

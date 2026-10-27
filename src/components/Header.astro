@@ -13,21 +13,23 @@ interface Props {
 
 const { nome, secoes, logo, inicio = '' } = Astro.props;
 const temContato = secoes.some((s) => s.id === 'contato');
+// Seções de apoio (problema, princípios, depoimentos…) ficam fora do menu para ele caber.
+const doMenu = secoes.filter((s) => s.menu);
 ---
 
 <header class="fixed inset-x-0 top-0 z-50 border-b border-line bg-bg">
   <div class="moldura flex h-(--altura-cabecalho) items-center gap-4 sm:gap-6">
     <a
       href={inicio || '#topo'}
-      class="min-w-0 flex-1 truncate text-[1.0625rem] font-semibold tracking-[-0.01em] no-underline xl:max-w-[18rem] xl:flex-none"
+      class="min-w-0 flex-1 truncate text-[1.0625rem] font-semibold tracking-[-0.01em] no-underline xl:max-w-[14rem] xl:flex-none"
     >
       {logo ? <img src={logo} alt={nome} class="h-8 w-auto" /> : <Texto valor={nome} />}
     </a>
     {
-      secoes.length > 0 && (
+      doMenu.length > 0 && (
         <nav aria-label="Seções" class="hidden xl:ml-auto xl:block">
-          <ul class="flex gap-6">
-            {secoes.map((s) => (
+          <ul class="flex gap-5">
+            {doMenu.map((s) => (
               <li>
                 <a
                   href={`${inicio}#${s.id}`}
@@ -52,7 +54,7 @@ const temContato = secoes.some((s) => s.id === 'contato');
       )
     }
     {
-      secoes.length > 0 && (
+      doMenu.length > 0 && (
         <button
           id="botao-menu"
           type="button"
@@ -69,11 +71,11 @@ const temContato = secoes.some((s) => s.id === 'contato');
   </div>
 
   {
-    secoes.length > 0 && (
+    doMenu.length > 0 && (
       <div id="menu-navegacao" class="menu-painel xl:hidden" hidden>
         <nav aria-label="Seções" class="moldura py-4">
           <ul>
-            {secoes.map((s) => (
+            {doMenu.map((s) => (
               <li>
                 <a href={`${inicio}#${s.id}`} class="link-menu-painel" data-link-secao={s.id}>
                   <span class="rotulo tabular">{s.numero}</span>

@@ -1,5 +1,9 @@
 ---
-/** 02 Abordagem: sequência ligada por filete, horizontal no desktop e vertical no celular. */
+/**
+ * 02 Abordagem. A lista ordenada é o conteúdo (vertical no celular e sem JS).
+ * A partir de 1024 px, uma órbita decorativa (orbita.ts) gira as etapas em volta de um
+ * painel de terminal; a etapa ativa acompanha a rolagem e destaca o item da lista.
+ */
 import type { SecaoNumerada } from '../content/comandos.ts';
 import type { Organizacao } from '../content/schema.ts';
 import Secao from './Secao.astro';
@@ -11,29 +15,62 @@ interface Props {
 }
 
 const { secao, dados } = Astro.props;
+const indice = (i: number) => String(i + 1).padStart(2, '0');
+const primeira = dados.abordagem[0];
 ---
 
 <Secao secao={secao}>
-  <ol class="etapas" role="list">
-    {
-      dados.abordagem.map((etapa, i) => (
-        <li class="etapa">
-          <span class="rotulo tabular" aria-hidden="true">
-            {String(i + 1).padStart(2, '0')}
+  <div class="abordagem">
+    <div class="orbita" aria-hidden="true" data-orbita>
+      <span class="anel"></span>
+      <span class="anel anel-interno"></span>
+      <div class="painel">
+        <p class="comando"><span class="cifrao">$</span> <span data-orbita-comando>cat etapa_01.md</span></p>
+        <p class="titulo" data-orbita-titulo>{primeira?.etapa}</p>
+        <p class="descricao" data-orbita-descricao>{primeira?.descricao}</p>
+      </div>
+      {
+        dados.abordagem.map((etapa, i) => (
+          <span class="no" data-no data-titulo={etapa.etapa} data-descricao={etapa.descricao}>
+            {indice(i)}
           </span>
-          <h3 class="text-h3 mt-2">
-            <Texto valor={etapa.etapa} />
-          </h3>
-          <p class="mt-2 text-text-muted">
-            <Texto valor={etapa.descricao} />
-          </p>
-        </li>
-      ))
-    }
-  </ol>
+        ))
+      }
+    </div>
+
+    <ol class="etapas" role="list">
+      {
+        dados.abordagem.map((etapa, i) => (
+          <li class="etapa" data-revelar data-atraso={i * 120}>
+            <span class="rotulo tabular" aria-hidden="true">
+              {indice(i)}
+            </span>
+            <h3 class="text-h3 mt-1">
+              <Texto valor={etapa.etapa} />
+            </h3>
+            <p class="mt-1 text-text-muted">
+              <Texto valor={etapa.descricao} />
+            </p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
 </Secao>
 
+<script>
+  import { iniciarOrbita } from '../lib/orbita.ts';
+
+  const orbita = document.querySelector<HTMLElement>('[data-orbita]');
+  if (orbita && matchMedia('(min-width: 64rem)').matches) iniciarOrbita(orbita);
+</script>
+
 <style>
+  .abordagem {
+    display: grid;
+    gap: 3rem;
+  }
+
   .etapas {
     display: grid;
     border-left: 1px solid var(--color-line);
@@ -42,7 +79,7 @@ const { secao, dados } = Astro.props;
   .etapa {
     position: relative;
     min-width: 0;
-    padding: 0 0 2.5rem 1.5rem;
+    padding: 0 0 2rem 1.5rem;
     overflow-wrap: anywhere;
   }
 
@@ -50,7 +87,6 @@ const { secao, dados } = Astro.props;
     padding-bottom: 0;
   }
 
-  /* Marca decorativa sobre o filete. */
   .etapa::before {
     content: '';
     position: absolute;
@@ -59,23 +95,116 @@ const { secao, dados } = Astro.props;
     width: 7px;
     height: 7px;
     background-color: var(--color-detail);
+    transition: background-color 200ms steps(2);
+  }
+
+  .etapa.etapa-ativa::before {
+    background-color: var(--color-accent);
+  }
+
+  .etapa :global(h3) {
+    transition: color 200ms steps(2);
+  }
+
+  /* Órbita: só no desktop e só com JavaScript. */
+  .orbita {
+    display: none;
   }
 
   @media (width >= 64rem) {
-    .etapas {
-      grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-      row-gap: 3rem;
-      border-left: 0;
+    .abordagem {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      align-items: center;
     }
 
-    .etapa {
-      padding: 1.5rem 1.5rem 0 0;
-      border-top: 1px solid var(--color-line);
+    :global(.js) .orbita {
+      position: relative;
+      display: grid;
+      place-items: center;
+      aspect-ratio: 1;
+      width: 100%;
+      max-width: 26rem;
     }
+  }
 
-    .etapa::before {
-      top: -4px;
-      left: 0;
+  .anel {
+    position: absolute;
+    inset: 34px;
+    border: 1px dashed var(--color-line);
+    border-radius: 50%;
+  }
+
+  .anel-interno {
+    inset: 30%;
+    border-style: solid;
+    border-color: var(--color-line);
+    animation: girar 40s linear infinite;
+  }
+
+  @keyframes girar {
+    to {
+      transform: rotate(360deg);
     }
+  }
+
+  .painel {
+    position: relative;
+    z-index: 1;
+    width: 56%;
+    padding: 0.75rem;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-surface);
+    font-family: var(--font-mono);
+    font-size: var(--text-rotulo);
+  }
+
+  .comando {
+    color: var(--color-text-muted);
+  }
+
+  .cifrao {
+    color: var(--color-accent);
+  }
+
+  .titulo {
+    margin-top: 0.5rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .descricao {
+    margin-top: 0.25rem;
+    color: var(--color-text-muted);
+  }
+
+  .no {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin: -22px 0 0 -22px;
+    border: 1px solid var(--color-text-muted);
+    background-color: var(--color-bg);
+    font-family: var(--font-mono);
+    font-size: var(--text-rotulo);
+    cursor: pointer;
+    transition:
+      background-color 160ms steps(2),
+      color 160ms steps(2),
+      border-color 160ms steps(2);
+  }
+
+  .no:hover {
+    border-color: var(--color-text);
+  }
+
+  .no.ativo {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent);
+    color: var(--color-bg);
   }
 </style>

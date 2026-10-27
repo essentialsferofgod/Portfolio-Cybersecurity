@@ -6,6 +6,18 @@ import { COMPLETO, VARIANTES } from './variantes.ts';
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'];
 
 async function analisar(pagina: Page, rotulo: string): Promise<string[]> {
+  // As entradas animadas começam transparentes; o contraste é avaliado no estado final.
+  await pagina.evaluate(async () => {
+    document.querySelectorAll('[data-revelar]').forEach((el) => el.classList.add('revelado'));
+    await new Promise((r) => requestAnimationFrame(r));
+    // Espera transições e animações finitas (entradas, digitação) chegarem ao estado final.
+    await Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getTiming().iterations !== Infinity)
+        .map((a) => a.finished.catch(() => undefined)),
+    );
+  });
   const { violations } = await new AxeBuilder({ page: pagina }).withTags(TAGS).analyze();
   for (const v of violations) {
     console.log(`[axe] ${rotulo}: ${v.impact} ${v.id} (${v.nodes.length}) — ${v.help}`);

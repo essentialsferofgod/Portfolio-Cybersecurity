@@ -1,0 +1,350 @@
+---
+/**
+ * Laboratório de ameaças: simulação interativa com dados fictícios (laboratorio.ts).
+ * Sem JavaScript, mostra só a descrição e um aviso; a simulação é complementar.
+ */
+import type { SecaoNumerada } from '../content/comandos.ts';
+import Secao from './Secao.astro';
+
+interface Props {
+  secao: SecaoNumerada;
+}
+
+const { secao } = Astro.props;
+const VISOES = [
+  { id: 'rede', rotulo: 'rede' },
+  { id: 'ativos', rotulo: 'ativos' },
+  { id: 'exposicao', rotulo: 'exposição' },
+];
+---
+
+<Secao secao={secao}>
+  <p class="destaque">Sinais no ruído.</p>
+  <p class="mt-4 max-w-[60ch] text-text-muted">
+    Explore um ambiente digital simulado, em que conexões, ativos e possíveis pontos de exposição ficam visíveis.
+  </p>
+
+  <div class="lab mt-8" data-lab data-visao="rede" data-fase="parado">
+    <div class="lab-barra">
+      <div class="lab-visoes" role="group" aria-label="Visão da simulação">
+        {
+          VISOES.map((v, i) => (
+            <button type="button" class="lab-visao" data-visao={v.id} aria-pressed={i === 0 ? 'true' : 'false'}>
+              {v.rotulo}
+            </button>
+          ))
+        }
+      </div>
+      <p class="lab-status"><span class="lab-ponto" aria-hidden="true"></span><span data-lab-status>simulação parada</span></p>
+    </div>
+
+    <div class="lab-corpo">
+      <div class="lab-mapa" data-lab-mapa>
+        <span class="lab-varredura" aria-hidden="true"></span>
+        <svg class="lab-linhas" data-lab-linhas viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <p class="lab-sem-js">A simulação interativa precisa de JavaScript.</p>
+      </div>
+
+      <div class="lab-inspetor" aria-live="polite">
+        <p class="rotulo">inspetor</p>
+        <p class="mt-3 text-text-muted" data-lab-vazio>Selecione um ativo para inspecionar.</p>
+        <dl class="lab-dados mt-3" data-lab-dados hidden>
+          <div><dt>id do ativo</dt><dd data-campo="id"></dd></div>
+          <div><dt>tipo</dt><dd data-campo="tipo"></dd></div>
+          <div><dt>conexão</dt><dd data-campo="conexao"></dd></div>
+          <div><dt>exposição</dt><dd data-campo="exposicao"></dd></div>
+          <div><dt>último evento simulado</dt><dd data-campo="evento"></dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="lab-log" data-lab-log aria-hidden="true"></div>
+
+    <div class="lab-rodape">
+      <span>ambiente de demonstração / dados simulados</span>
+      <button type="button" class="lab-reiniciar" data-lab-reiniciar>reiniciar simulação ↻</button>
+    </div>
+  </div>
+
+  <p class="mt-6 max-w-[60ch] text-text-muted">
+    Cada sinal visível conta uma história. Entender as conexões é o primeiro passo para entender o risco.
+  </p>
+</Secao>
+
+<script>
+  import { iniciarLaboratorio } from '../lib/laboratorio.ts';
+
+  const lab = document.querySelector<HTMLElement>('[data-lab]');
+  if (lab) iniciarLaboratorio(lab);
+</script>
+
+<style is:global>
+  .lab {
+    border: 1px solid var(--color-line);
+    background-color: var(--color-surface);
+    font-family: var(--font-mono);
+    font-size: var(--text-rotulo);
+  }
+
+  .lab-barra,
+  .lab-rodape {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding: 0.5rem 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .lab-barra {
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .lab-rodape {
+    border-top: 1px solid var(--color-line);
+  }
+
+  .lab-visoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .lab-visao,
+  .lab-reiniciar {
+    min-height: 2.75rem;
+    padding: 0 0.75rem;
+    border: 1px solid var(--color-line);
+    color: var(--color-text-muted);
+    cursor: pointer;
+  }
+
+  .lab-visao[aria-pressed='true'] {
+    border-color: var(--color-text);
+    color: var(--color-text);
+  }
+
+  .lab-reiniciar:hover,
+  .lab-visao:hover {
+    color: var(--color-text);
+    border-color: var(--color-text-muted);
+  }
+
+  .lab-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .lab-ponto {
+    width: 7px;
+    height: 7px;
+    background-color: var(--color-detail);
+  }
+
+  .lab[data-fase='pronto'] .lab-ponto {
+    background-color: var(--color-accent);
+    animation: piscar 1.06s steps(1) infinite;
+  }
+
+  .lab-corpo {
+    display: grid;
+  }
+
+  @media (width >= 48rem) {
+    .lab-corpo {
+      grid-template-columns: minmax(0, 1fr) 15rem;
+    }
+
+    .lab-inspetor {
+      border-top: 0 !important;
+      border-left: 1px solid var(--color-line);
+    }
+  }
+
+  .lab-mapa {
+    position: relative;
+    aspect-ratio: 5 / 3;
+    margin: 1rem;
+    background-image: radial-gradient(var(--color-line) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .lab-sem-js {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--color-text-muted);
+  }
+
+  .js .lab-sem-js {
+    display: none;
+  }
+
+  html:not(.js) .lab-barra,
+  html:not(.js) .lab-inspetor,
+  html:not(.js) .lab-log,
+  html:not(.js) .lab-rodape button {
+    display: none;
+  }
+
+  .lab-varredura {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--varredura, 0%);
+    width: 1px;
+    background-color: var(--color-accent);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .lab-linhas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .lab-linhas line {
+    stroke: var(--color-detail);
+    stroke-width: 1;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 900ms steps(12, end), stroke 200ms;
+  }
+
+  .lab-linhas.visivel line {
+    stroke-dashoffset: 0;
+  }
+
+  .lab[data-visao='exposicao'] .lab-linhas line {
+    stroke: var(--color-line);
+  }
+
+  .lab-no {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: -0.75rem 0 0 -0.75rem;
+    border: 1px solid var(--color-text-muted);
+    background-color: var(--color-bg);
+    cursor: pointer;
+    opacity: 0;
+    transition:
+      opacity 200ms steps(2),
+      background-color 160ms,
+      border-color 160ms;
+  }
+
+  .lab-no::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    background-color: var(--color-text-muted);
+  }
+
+  .lab-no.visivel {
+    opacity: 1;
+  }
+
+  .lab-no:hover,
+  .lab-no.varrido {
+    border-color: var(--color-text);
+  }
+
+  .lab-no[aria-pressed='true'] {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent);
+  }
+
+  .lab-no[aria-pressed='true']::before {
+    background-color: var(--color-bg);
+  }
+
+  .lab-no-rotulo {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-top: 0.25rem;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+    display: none;
+  }
+
+  .lab[data-visao='ativos'] .lab-no-rotulo {
+    display: block;
+  }
+
+  .lab[data-visao='exposicao'] .exposicao-baixa {
+    opacity: 0.45;
+  }
+
+  .lab[data-visao='exposicao'] .exposicao-media::before {
+    background-color: var(--color-text);
+  }
+
+  .lab[data-visao='exposicao'] .exposicao-alta {
+    border-color: var(--color-error);
+  }
+
+  .lab[data-visao='exposicao'] .exposicao-alta::before {
+    background-color: var(--color-error);
+    animation: piscar 1.06s steps(1) infinite;
+  }
+
+  .lab-no.pulso {
+    animation: pulso-no 900ms steps(6, end);
+  }
+
+  @keyframes pulso-no {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+    30% {
+      box-shadow: 0 0 0 6px var(--color-accent);
+    }
+  }
+
+  .lab-inspetor {
+    padding: 1rem;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .lab-dados {
+    display: grid;
+    gap: 0.625rem;
+  }
+
+  .lab-dados dt {
+    color: var(--color-text-muted);
+  }
+
+  .lab-dados dd {
+    color: var(--color-text);
+    overflow-wrap: anywhere;
+  }
+
+  .lab-log {
+    min-height: 9rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--color-line);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
+
+  .lab-log .destaque {
+    font-size: inherit;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--color-accent);
+  }
+</style>

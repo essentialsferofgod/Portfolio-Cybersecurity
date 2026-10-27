@@ -122,6 +122,7 @@ export function primeiraFrase(texto: string, limite = 200): string {
 
 const SECAO_DO_COMANDO: Record<string, SecaoNumerada['id']> = {
   services: 'servicos',
+  lab: 'laboratorio',
   approach: 'abordagem',
   about: 'sobre',
   faq: 'faq',
@@ -151,6 +152,12 @@ export function gerarSaida(nome: string, ctx: ContextoSaida): LinhaSaida[] {
         { tipo: 'texto', texto: plural(ctx.servicos.length, 'serviço', 'serviços') },
         { tipo: 'itens', itens: ctx.servicos.map((s, i) => ({ indice: indice(i), texto: s.titulo })) },
         destino('ver detalhes'),
+      ];
+    case 'lab':
+      return [
+        { tipo: 'texto', texto: 'ambiente de demonstração · dados simulados' },
+        { tipo: 'texto', texto: 'mapa de ativos, conexões e níveis de exposição', suave: true },
+        destino('abrir simulação'),
       ];
     case 'approach':
       return [

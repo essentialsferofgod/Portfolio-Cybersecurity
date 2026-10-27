@@ -78,6 +78,32 @@ const completo = {
       autorizadoPublicar: true,
     },
   ],
+  aviso: '[Aviso: site de demonstração com dados fictícios]',
+  chamada: '[Linha curta acima do título]',
+  pilares: ['[Pilar 1]', '[Pilar 2]', '[Pilar 3]'],
+  slogan: '[Slogan do rodapé]',
+  problema: { titulo: '[Frase sobre o problema.]', texto: ['[Parágrafo 1 sobre o problema.]', '[Parágrafo 2 sobre o problema.]'] },
+  laboratorio: true,
+  principios: {
+    titulo: '[Frase sobre os princípios.]',
+    texto: '[Parágrafo sobre os princípios.]',
+    itens: [
+      { nome: '[Princípio 1]', descricao: '[Descrição curta.]' },
+      { nome: '[Princípio 2]', descricao: '[Descrição curta.]' },
+      { nome: '[Princípio 3]', descricao: '[Descrição curta.]' },
+    ],
+  },
+  chamadaFinal: { titulo: '[Chamada final.]', texto: ['[Frase de apoio da chamada final.]'] },
+  formularioDemo: true,
+  numeros: [
+    { valor: 120, sufixo: '+', rotulo: '[Indicador A]' },
+    { valor: 35, rotulo: '[Indicador B]' },
+    { valor: 90, sufixo: '%', rotulo: '[Indicador C]' },
+  ],
+  depoimentos: [
+    { texto: '[Depoimento 1: frase curta sobre a experiência com o serviço.]', autor: '[Função da pessoa]', empresa: '[Empresa]' },
+    { texto: '[Depoimento 2: frase curta sobre a experiência com o serviço.]', autor: '[Função da pessoa]' },
+  ],
   faq: [
     { pergunta: '[Pergunta frequente 1?]', resposta: '[Resposta objetiva à pergunta 1, em até três frases.]' },
     { pergunta: '[Pergunta frequente 2?]', resposta: '[Resposta objetiva à pergunta 2, em até três frases.]' },
@@ -129,6 +155,13 @@ const extremo = {
     emissor: noLimite('Emissor', 60),
     urlVerificacao: `https://example.com/verificacao/item-${i + 1}`,
     autorizadoPublicar: true as const,
+  })),
+  aviso: noLimite('Aviso', 160),
+  numeros: Array.from({ length: 4 }, (_, i) => ({ valor: 999999 - i, sufixo: '+', rotulo: noLimite(`Indicador ${i + 1}`, 60) })),
+  depoimentos: Array.from({ length: 3 }, (_, i) => ({
+    texto: noLimite(`Depoimento ${i + 1}`, 240),
+    autor: noLimite('Função', 60),
+    empresa: noLimite('Empresa', 60),
   })),
   faq: Array.from({ length: 8 }, (_, i) => ({
     pergunta: noLimite(`Pergunta ${i + 1}`, 100),

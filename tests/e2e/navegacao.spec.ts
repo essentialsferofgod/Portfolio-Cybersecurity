@@ -41,7 +41,7 @@ test('seção ativa: aria-current no menu e linha de status em 1440px', async ({
   await page.locator('#faq').evaluate((el) => window.scrollTo(0, el.getBoundingClientRect().top + scrollY - 120));
   const linkFaq = page.locator('header nav').first().getByRole('link', { name: /faq/ });
   await expect(linkFaq).toHaveAttribute('aria-current', 'true');
-  await expect(status).toContainText('05/06 faq');
+  await expect(status).toContainText('09/10 faq');
   await expect(page.locator('[aria-current="true"]')).toHaveCount(2); // menu do desktop e painel do celular (oculto)
 
   await expect(status).toBeVisible();
@@ -66,7 +66,7 @@ test('o terminal não rola a página: links da saída usam âncoras e Voltar ret
   await chip.click();
   await expect(page.getByRole('log').locator('.bloco')).toHaveCount(1);
   expect(await page.evaluate(() => scrollY)).toBe(rolagem);
-  await page.getByRole('log').getByRole('link', { name: /ver detalhes em 01/ }).click();
+  await page.getByRole('log').getByRole('link', { name: /ver detalhes em/ }).click();
   await expect(page).toHaveURL(/#servicos$/);
   await page.goBack();
   await expect(page).toHaveURL(COMPLETO);

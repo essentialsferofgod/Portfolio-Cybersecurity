@@ -1,0 +1,93 @@
+---
+/** Depoimentos como arquivos abertos no terminal (`cat depoimento_01.txt`). */
+import type { SecaoNumerada } from '../content/comandos.ts';
+import type { Organizacao } from '../content/schema.ts';
+import Secao from './Secao.astro';
+import Texto from './Texto.astro';
+
+interface Props {
+  secao: SecaoNumerada;
+  dados: Organizacao;
+}
+
+const { secao, dados } = Astro.props;
+---
+
+<Secao secao={secao}>
+  {dados.aviso && <p class="rotulo">depoimentos fictícios, apenas para demonstração do layout</p>}
+  <div class="depoimentos mt-6">
+    {
+      dados.depoimentos.map((d, i) => (
+        <figure class="depoimento" data-revelar data-atraso={i * 140}>
+          <p class="arquivo" aria-hidden="true">
+            depoimento_{String(i + 1).padStart(2, '0')}.txt
+          </p>
+          <blockquote>
+            <p>
+              <Texto valor={d.texto} />
+            </p>
+          </blockquote>
+          <figcaption>
+            <span class="text-text">
+              <Texto valor={d.autor} />
+            </span>
+            {d.empresa && (
+              <span>
+                <Texto valor={d.empresa} />
+              </span>
+            )}
+          </figcaption>
+        </figure>
+      ))
+    }
+  </div>
+</Secao>
+
+<style>
+  .depoimentos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    gap: 1rem;
+  }
+
+  .depoimento {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-surface);
+    transition: border-color 160ms var(--ease-saida);
+  }
+
+  .depoimento:hover {
+    border-color: var(--color-text-muted);
+  }
+
+  .arquivo {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--color-line);
+    font-family: var(--font-mono);
+    font-size: var(--text-rotulo);
+    color: var(--color-text-muted);
+  }
+
+  blockquote {
+    flex: 1;
+    padding: 1.25rem 1rem 0;
+    font-size: 1.0625rem;
+  }
+
+  blockquote p::before {
+    content: '> ' / '';
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+  }
+
+  figcaption {
+    display: grid;
+    gap: 0.125rem;
+    padding: 1.25rem 1rem 1rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-rotulo);
+    color: var(--color-text-muted);
+  }
+</style>

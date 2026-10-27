@@ -27,7 +27,9 @@ async function paradaAtual(pagina: Page): Promise<Parada | null> {
     const cabecalho = document.querySelector('header')!.getBoundingClientRect().bottom;
     const status = document.getElementById('linha-status');
     const rodape = status && getComputedStyle(status).display !== 'none' ? status.getBoundingClientRect().top : innerHeight;
-    const encoberto = !fixo && (caixa.top < cabecalho - 1 || caixa.bottom > rodape + 1);
+    // WCAG 2.4.11 (AA): o foco não pode ficar sob o cabeçalho fixo nem totalmente fora da área visível.
+    // Um textarea alto pode ter a base abaixo da janela: o navegador rola só até o cursor de texto.
+    const encoberto = !fixo && (caixa.top < cabecalho - 1 || caixa.top >= rodape);
     const texto = (el.getAttribute('aria-label') ?? el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 40);
     return { descricao: `${el.tagName.toLowerCase()} "${texto}"`, focoVisivel, encoberto };
   });
@@ -70,7 +72,7 @@ test('terminal: ↓ escolhe, Enter executa, → completa, Esc fecha e limpa, Tab
 
   await page.keyboard.type('serv');
   await expect(campo).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.getByRole('option')).toHaveCount(1);
+  await expect(page.locator('#terminal-sugestoes').getByRole('option')).toHaveCount(1);
   await page.keyboard.press('ArrowDown');
   await expect(campo).toHaveAttribute('aria-activedescendant', 'terminal-sugestao-services');
   await page.keyboard.press('Enter');
@@ -83,12 +85,12 @@ test('terminal: ↓ escolhe, Enter executa, → completa, Esc fecha e limpa, Tab
 
   // "abo" também casa com approach (alias "abordagem"); "abou", só com about.
   await page.keyboard.type('abou');
-  await expect(page.getByRole('option')).toHaveCount(1);
+  await expect(page.locator('#terminal-sugestoes').getByRole('option')).toHaveCount(1);
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('ArrowRight');
   await expect(campo).toHaveValue('about');
   await page.keyboard.press('Enter');
-  await expect(registro.locator('.bloco').last()).toContainText('ler mais em 03 / sobre');
+  await expect(registro.locator('.bloco').last()).toContainText('ler mais em 06 / sobre');
 
   await page.keyboard.type('a');
   await expect(campo).toHaveAttribute('aria-expanded', 'true');

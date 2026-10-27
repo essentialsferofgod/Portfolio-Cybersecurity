@@ -40,6 +40,29 @@ const itemConfianca = z.object({
   autorizadoPublicar: z.literal(true),
 });
 
+/** Número de destaque exibido com contagem animada (dado demonstrativo, quando for o caso). */
+const numero = z.object({
+  valor: z.number().int().nonnegative(),
+  sufixo: z.string().max(4).optional(),
+  rotulo: texto,
+});
+
+const depoimento = z.object({
+  texto,
+  /** Função da pessoa, por exemplo "Diretora de operações". */
+  autor: texto,
+  empresa: texto.optional(),
+});
+
+const blocoTexto = z.object({
+  /** Frase de destaque da seção. */
+  titulo: texto,
+  /** Parágrafos. */
+  texto: z.array(texto).min(1),
+});
+
+const principio = z.object({ nome: texto, descricao: texto });
+
 const pergunta = z.object({
   pergunta: texto,
   resposta: texto,
@@ -70,6 +93,26 @@ export const organizacaoSchema = z.object({
   servicos: z.array(servico).default([]),
   abordagem: z.array(etapa).default([]),
   confianca: z.array(itemConfianca).default([]),
+  numeros: z.array(numero).default([]),
+  depoimentos: z.array(depoimento).default([]),
+  /** Linha curta acima do h1 (ex.: "Estúdio independente de cibersegurança"). */
+  chamada: texto.optional(),
+  /** Pilares exibidos abaixo dos CTAs do hero. */
+  pilares: z.array(texto).default([]),
+  /** Frase do rodapé. */
+  slogan: texto.optional(),
+  problema: blocoTexto.optional(),
+  /** Exibe o laboratório de ameaças (simulação com dados fictícios). */
+  laboratorio: z.boolean().default(false),
+  principios: z
+    .object({ titulo: texto, texto, itens: z.array(principio).min(2).max(6) })
+    .optional(),
+  /** Chamada final antes dos canais de contato. */
+  chamadaFinal: blocoTexto.optional(),
+  /** Formulário de contato de demonstração: valida e confirma, mas não envia nada. */
+  formularioDemo: z.boolean().default(false),
+  /** Aviso exibido no rodapé e junto de números e depoimentos (ex.: site de demonstração). */
+  aviso: texto.optional(),
   faq: z.array(pergunta).default([]),
   contato: contato.default({}),
   legal: z.object({ politicaPrivacidadeUrl: urlHttps.optional() }).default({}),
@@ -117,6 +160,7 @@ export const ORCAMENTOS: Record<string, number> = {
   'servicos[].inclui[]': 80,
   'abordagem[].etapa': 30,
   'abordagem[].descricao': 160,
+  'depoimentos[].texto': 240,
   'faq[].pergunta': 100,
   'faq[].resposta': 400,
 };

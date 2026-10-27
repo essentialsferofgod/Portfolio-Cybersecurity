@@ -1,0 +1,90 @@
+---
+/** Números de destaque com contagem e barra ASCII que enche ao entrar na tela (efeitos.ts). */
+import type { Organizacao } from '../content/schema.ts';
+import Texto from './Texto.astro';
+
+interface Props {
+  dados: Organizacao;
+}
+
+const { dados } = Astro.props;
+const maior = Math.max(...dados.numeros.map((n) => n.valor), 1);
+---
+
+<section class="mt-(--espaco-secao)" aria-labelledby="numeros-titulo">
+  <div class="grade">
+    <h2 id="numeros-titulo" class="sr-only">Números</h2>
+    <p class="prompt-secao col-span-full" aria-hidden="true">
+      <span class="cifrao">$</span> <span data-digitar="stats --resumo">stats --resumo</span>
+    </p>
+    <dl class="numeros col-span-full mt-6">
+      {
+        dados.numeros.map((n, i) => (
+          <div class="numero" data-revelar data-atraso={i * 140}>
+            <dt class="rotulo">
+              <Texto valor={n.rotulo} />
+            </dt>
+            <dd>
+              <span class="valor tabular">
+                <span data-contar={n.valor}>{n.valor.toLocaleString('pt-BR')}</span>
+                {n.sufixo}
+              </span>
+              <span class="barra" aria-hidden="true" data-nivel={Math.max(8, Math.round((n.valor / maior) * 100))}>
+                <span />
+              </span>
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+    {dados.aviso && <p class="rotulo col-span-full mt-4">dados demonstrativos</p>}
+  </div>
+</section>
+
+<style>
+  .numeros {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    border-top: 1px solid var(--color-line);
+    border-left: 1px solid var(--color-line);
+  }
+
+  .numero {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    border-right: 1px solid var(--color-line);
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .valor {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: clamp(2.25rem, 1.6rem + 2vw, 3.5rem);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  /* Barra segmentada [█████░░░░] que enche em passos até o nível do número. */
+  .barra {
+    position: relative;
+    display: block;
+    height: 0.625rem;
+    margin-top: 1rem;
+    background: repeating-linear-gradient(90deg, var(--color-line) 0 7px, transparent 7px 10px);
+  }
+
+  .barra > span {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(90deg, var(--color-accent) 0 7px, transparent 7px 10px);
+    clip-path: inset(0 calc(100% - var(--nivel, 100%)) 0 0);
+  }
+
+  .barra > span {
+    transition: clip-path 1.4s steps(18, end) 0.2s;
+  }
+</style>
