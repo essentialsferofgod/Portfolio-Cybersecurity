@@ -5,19 +5,19 @@
  */
 const DURACAO = 600;
 
-export function rolarAte(alvo: HTMLElement, foco?: HTMLElement | null): void {
-  const folga = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
-  const destino = Math.max(0, alvo.getBoundingClientRect().top + scrollY - folga);
+/** Rola até a posição vertical `destino` (px do documento). */
+export function rolarPara(destino: number, foco?: HTMLElement | null): void {
+  const alvoY = Math.max(0, Math.min(destino, document.documentElement.scrollHeight - innerHeight));
   const focar = () => foco?.focus({ preventScroll: true });
 
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    scrollTo(0, destino);
+    scrollTo(0, alvoY);
     focar();
     return;
   }
 
   const inicio = scrollY;
-  const distancia = destino - inicio;
+  const distancia = alvoY - inicio;
   const comeco = performance.now();
   const quadro = (agora: number) => {
     const p = Math.min(1, (agora - comeco) / DURACAO);
@@ -26,4 +26,10 @@ export function rolarAte(alvo: HTMLElement, foco?: HTMLElement | null): void {
     else focar();
   };
   requestAnimationFrame(quadro);
+}
+
+/** Rola até o topo de `alvo`, descontando o cabeçalho fixo. */
+export function rolarAte(alvo: HTMLElement, foco?: HTMLElement | null): void {
+  const folga = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+  rolarPara(alvo.getBoundingClientRect().top + scrollY - folga, foco);
 }

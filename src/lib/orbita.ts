@@ -1,85 +1,124 @@
 /**
- * Órbita da seção Abordagem, adaptada da "radial orbital timeline" do pacote de animações,
- * sem React. As etapas giram em volta de um painel central de terminal; a etapa ativa
- * acompanha a rolagem pela seção, e clicar num nó a seleciona. É decorativa (aria-hidden):
- * a lista ordenada ao lado é a versão acessível e a única exibida no celular e sem JS.
+ * Órbita da seção Metodologia, adaptada da "radial orbital timeline" do pacote de animações,
+ * sem React. É decorativa (aria-hidden): a lista ordenada ao lado é o conteúdo.
+ *
+ * Modo fixado (≥ 64rem e sem movimento reduzido): a seção ganha um trilho alto e o palco
+ * (órbita, cartão central e lista) fica preso com position: sticky. O progresso da rolagem
+ * pelo trilho (0 a 1) gira a órbita de forma contínua — sem interpolação por quadro, que
+ * dependia do FPS —, destaca a etapa na lista e o cartão digita `cat etapa_0N.md`.
+ * Clicar numa etapa (botão na lista ou nó da órbita) rola até o ponto correspondente.
+ *
+ * Fora desse modo (movimento reduzido), a etapa acompanha a rolagem pela seção, sem animação.
  */
+import { rolarAte, rolarPara } from './rolagem.ts';
+
+const FIXADO = '(min-width: 64rem) and (prefers-reduced-motion: no-preference)';
+
 export function iniciarOrbita(raiz: HTMLElement): void {
   const nos = [...raiz.querySelectorAll<HTMLElement>('[data-no]')];
   const titulo = raiz.querySelector<HTMLElement>('[data-orbita-titulo]');
   const descricao = raiz.querySelector<HTMLElement>('[data-orbita-descricao]');
   const comando = raiz.querySelector<HTMLElement>('[data-orbita-comando]');
   const secao = raiz.closest('section');
+  const trilho = secao?.querySelector<HTMLElement>('[data-trilho]');
+  const palco = secao?.querySelector<HTMLElement>('[data-palco]');
   const lista = secao ? [...secao.querySelectorAll<HTMLElement>('.etapa')] : [];
-  if (nos.length === 0 || !secao) return;
+  if (nos.length === 0 || !secao || !trilho || !palco) return;
 
-  const reduzir = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const total = nos.length;
-  let ativa = 0;
-  let rotacao = -90;
-  let alvo = -90;
-  let fixadaAte = 0;
-  let raf = 0;
+  const fixado = () => matchMedia(FIXADO).matches;
+  const reduzir = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let ativa = -1;
+  let digitacao = 0;
 
-  function posicionar(): void {
+  const limitar = (v: number) => Math.min(1, Math.max(0, v));
+  /** Ângulo que leva a etapa `posicao` (fracionária) para baixo (90°), perto do cartão. */
+  const angulo = (posicao: number) => 90 - (posicao / total) * 360;
+
+  function posicionar(rotacao: number): void {
     const raio = raiz.getBoundingClientRect().width / 2 - 34;
     nos.forEach((no, i) => {
-      const angulo = ((i / total) * 360 + rotacao) * (Math.PI / 180);
-      const x = Math.cos(angulo) * raio;
-      const y = Math.sin(angulo) * raio;
-      no.style.transform = `translate(${x}px, ${y}px)`;
-      // Nós "atrás" (parte de cima do círculo) ficam mais apagados.
-      no.style.opacity = String(0.55 + 0.45 * ((1 + Math.sin(angulo)) / 2));
+      const a = ((i / total) * 360 + rotacao) * (Math.PI / 180);
+      no.style.transform = `translate(${Math.cos(a) * raio}px, ${Math.sin(a) * raio}px)`;
+      // Nós na parte de cima do círculo ficam mais apagados.
+      no.style.opacity = String(0.55 + 0.45 * ((1 + Math.sin(a)) / 2));
     });
   }
 
+  function digitar(texto: string): void {
+    if (!comando) return;
+    clearInterval(digitacao);
+    if (reduzir()) {
+      comando.textContent = texto;
+      return;
+    }
+    let k = 0;
+    comando.textContent = '';
+    digitacao = window.setInterval(() => {
+      k++;
+      comando.textContent = texto.slice(0, k);
+      if (k >= texto.length) clearInterval(digitacao);
+    }, 32);
+  }
+
   function ativar(indice: number): void {
+    if (indice === ativa) return;
     ativa = indice;
     nos.forEach((no, i) => no.classList.toggle('ativo', i === indice));
     lista.forEach((item, i) => item.classList.toggle('etapa-ativa', i === indice));
     const no = nos[indice];
     if (titulo && no) titulo.textContent = no.dataset.titulo ?? '';
     if (descricao && no) descricao.textContent = no.dataset.descricao ?? '';
-    if (comando) comando.textContent = `cat etapa_${String(indice + 1).padStart(2, '0')}.md`;
-    // O nó ativo vai para a posição de baixo (90°), perto do painel de texto.
-    alvo = 90 - (indice / total) * 360;
+    digitar(`cat etapa_${String(indice + 1).padStart(2, '0')}.md`);
   }
 
-  function quadro(): void {
-    let diferenca = (((alvo - rotacao) % 360) + 540) % 360 - 180;
-    rotacao += reduzir ? diferenca : diferenca * 0.08;
-    posicionar();
-    if (Math.abs(diferenca) > 0.05) raf = requestAnimationFrame(quadro);
-    else raf = 0;
+  /** Distância percorrida pelo palco preso e posição de início, em px do documento. */
+  function curso(): { inicio: number; extensao: number } {
+    const topoFixo = parseFloat(getComputedStyle(palco!).top) || 0;
+    const caixa = trilho!.getBoundingClientRect();
+    return { inicio: caixa.top + scrollY - topoFixo, extensao: Math.max(1, caixa.height - palco!.offsetHeight) };
   }
 
-  function animar(): void {
-    if (!raf) raf = requestAnimationFrame(quadro);
-  }
-
-  function porRolagem(): void {
-    if (performance.now() < fixadaAte) return;
+  function atualizar(): void {
+    if (fixado()) {
+      const { inicio, extensao } = curso();
+      const p = limitar((scrollY - inicio) / extensao);
+      posicionar(angulo(p * (total - 1)));
+      ativar(Math.round(p * (total - 1)));
+      return;
+    }
+    // Sem fixação: a etapa avança conforme a seção passa pela tela, sem animação.
     const caixa = secao!.getBoundingClientRect();
-    const progresso = Math.min(0.999, Math.max(0, (innerHeight * 0.6 - caixa.top) / caixa.height));
-    const indice = Math.floor(progresso * total);
-    if (indice !== ativa) {
-      ativar(indice);
-      animar();
+    const p = limitar((innerHeight * 0.6 - caixa.top) / caixa.height);
+    const indice = Math.min(total - 1, Math.floor(p * total));
+    ativar(indice);
+    posicionar(angulo(indice));
+  }
+
+  function irPara(indice: number, foco?: HTMLElement | null): void {
+    if (fixado()) {
+      const { inicio, extensao } = curso();
+      rolarPara(inicio + (indice / (total - 1)) * extensao, foco);
+    } else {
+      const item = lista[indice];
+      if (item) rolarAte(item, foco);
     }
   }
 
-  nos.forEach((no, i) =>
-    no.addEventListener('click', () => {
-      fixadaAte = performance.now() + 2500;
-      ativar(i);
-      animar();
-    }),
-  );
-  addEventListener('scroll', () => requestAnimationFrame(porRolagem), { passive: true });
-  addEventListener('resize', posicionar);
+  // Etapas da lista viram botões (teclado) que levam ao ponto da rolagem correspondente.
+  lista.forEach((item, i) => {
+    const h3 = item.querySelector('h3');
+    if (!h3 || h3.querySelector('button')) return;
+    const botao = document.createElement('button');
+    botao.type = 'button';
+    botao.className = 'etapa-botao';
+    botao.append(...h3.childNodes);
+    h3.append(botao);
+    botao.addEventListener('click', () => irPara(i, botao));
+  });
+  nos.forEach((no, i) => no.addEventListener('click', () => irPara(i)));
 
-  ativar(0);
-  rotacao = alvo;
-  posicionar();
-  porRolagem();
+  addEventListener('scroll', () => requestAnimationFrame(atualizar), { passive: true });
+  addEventListener('resize', atualizar);
+  atualizar();
 }

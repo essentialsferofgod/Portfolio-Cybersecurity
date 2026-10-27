@@ -581,3 +581,11 @@ h2[tabindex='-1']:focus-visible {
     display: none;
   }
 }
+
+/* Metodologia fixada: o título acompanha o palco preso (mesma linha da grade do trilho). */
+@media (width >= 64rem) and (prefers-reduced-motion: no-preference) {
+  .js #abordagem h2 {
+    position: sticky;
+    top: calc(var(--altura-cabecalho) + 1.5rem);
+  }
+}
