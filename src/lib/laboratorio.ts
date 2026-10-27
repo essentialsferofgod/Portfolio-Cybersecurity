@@ -3,6 +3,8 @@
  * Ao entrar na tela, um log "digita" a varredura e os nós aparecem um a um; uma linha de
  * varredura acompanha a rolagem pela seção; clicar num nó abre o inspetor. Os nós são
  * botões reais (nome acessível, aria-pressed) e o inspetor anuncia a seleção (aria-live).
+ * Selecionar um ativo dispara uma propagação simulada: um pulso percorre as conexões, um
+ * salto a cada 120 ms; o inspetor e o log registram só o resumo final ("N ativos em K saltos").
  * Nada aqui representa um sistema real.
  */
 
@@ -17,9 +19,22 @@ interface No {
   conexao: string;
   evento: string;
   ligacoes: number[];
+  /** Pertence ao segmento sem ligação direta com o gateway. */
+  segmento: boolean;
 }
 
 const TIPOS = ['servidor web', 'banco de dados', 'estação de trabalho', 'serviço em nuvem', 'API', 'dispositivo IoT', 'e-mail', 'VPN'];
+/** Atraso entre saltos da propagação. */
+const SALTO_MS = 120;
+
+/**
+ * Segmento: ativos sem ligação direta com o gateway, pela posição na grade 3 × 5 (linha, coluna).
+ * Ficam encadeados (0,3)–(0,4)–(1,4)–(2,4)–(2,3) e entram na rede por (1,3), que segue
+ * ligado ao gateway. Assim o caminho até o gateway tem de 3 a 4 saltos.
+ */
+const SEGMENTO = ['0,3', '0,4', '1,4', '2,4', '2,3'];
+const ENTRADA_SEGMENTO = '1,3';
+
 const LOG_INICIO = [
   'inicializando rede simulada...',
   'escaneando ativos digitais...',
@@ -40,12 +55,17 @@ function gerarRede(semente: number): No[] {
   const aleatorio = sorteador(semente);
   const nos: No[] = [
     // O gateway é o ponto central: não gera sinais próprios, e o inspetor diz isso.
-    { id: 'GW-0001', tipo: 'gateway', x: 50, y: 30, exposicao: 'média', conexao: 'estabelecida', evento: 'sem eventos próprios · ponto central da rede', ligacoes: [] },
+    { id: 'GW-0001', tipo: 'gateway', x: 50, y: 30, exposicao: 'média', conexao: 'estabelecida', evento: 'sem eventos próprios · ponto central da rede', ligacoes: [], segmento: false },
   ];
+  const posicao = new Map<string, number>(); // "linha,coluna" → índice do nó
   for (let linha = 0; linha < 3; linha++) {
     for (let coluna = 0; coluna < 5; coluna++) {
       if (linha === 1 && coluna === 2) continue; // lugar do gateway
       const sorte = aleatorio();
+      const chave = `${linha},${coluna}`;
+      const segmento = SEGMENTO.includes(chave);
+      posicao.set(chave, nos.length);
+      // A ordem das chamadas ao sorteador não muda: o layout continua reproduzível.
       nos.push({
         id: `AT-${Math.floor(aleatorio() * 0xffff).toString(16).toUpperCase().padStart(4, '0')}`,
         tipo: TIPOS[Math.floor(aleatorio() * TIPOS.length)]!,
@@ -54,20 +74,58 @@ function gerarRede(semente: number): No[] {
         exposicao: sorte > 0.8 ? 'alta' : sorte > 0.45 ? 'média' : 'baixa',
         conexao: aleatorio() > 0.15 ? 'estabelecida' : 'intermitente',
         evento: '—',
-        ligacoes: [0],
+        ligacoes: segmento ? [] : [0],
+        segmento,
       });
     }
   }
-  // Algumas ligações laterais entre vizinhos próximos.
+  // Segmento encadeado, com uma única entrada para o resto da rede.
+  const cadeia = SEGMENTO.map((chave) => posicao.get(chave)!);
+  cadeia.slice(1).forEach((indice, k) => nos[indice]!.ligacoes.push(cadeia[k]!));
+  nos[posicao.get('1,4')!]!.ligacoes.push(posicao.get(ENTRADA_SEGMENTO)!);
+
+  // Ligações laterais entre vizinhos próximos, fora do segmento (para não criar atalhos).
+  // O sorteador é chamado para todo nó, como antes, para manter a sequência.
   nos.forEach((no, i) => {
     if (i === 0) return;
+    const sorteio = aleatorio();
+    if (no.segmento) return;
     const vizinho = nos
       .map((outro, j) => ({ j, d: Math.hypot(outro.x - no.x, outro.y - no.y) }))
-      .filter(({ j }) => j !== i && j !== 0)
+      .filter(({ j }) => j !== i && j !== 0 && !nos[j]!.segmento)
       .sort((a, b) => a.d - b.d)[0];
-    if (vizinho && aleatorio() > 0.4) no.ligacoes.push(vizinho.j);
+    if (vizinho && sorteio > 0.4) no.ligacoes.push(vizinho.j);
   });
   return nos;
+}
+
+/** Adjacência não direcionada a partir de `ligacoes`. */
+function adjacencia(nos: No[]): Set<number>[] {
+  const vizinhos = nos.map(() => new Set<number>());
+  nos.forEach((no, i) =>
+    no.ligacoes.forEach((j) => {
+      vizinhos[i]!.add(j);
+      vizinhos[j]?.add(i);
+    }),
+  );
+  return vizinhos;
+}
+
+/** Distância em saltos a partir de `origem` (busca em largura); -1 = inalcançável. */
+function saltos(nos: No[], origem: number): number[] {
+  const vizinhos = adjacencia(nos);
+  const distancia = nos.map(() => -1);
+  distancia[origem] = 0;
+  const fila = [origem];
+  while (fila.length) {
+    const atual = fila.shift()!;
+    for (const j of vizinhos[atual]!) {
+      if (distancia[j] !== -1) continue;
+      distancia[j] = distancia[atual]! + 1;
+      fila.push(j);
+    }
+  }
+  return distancia;
 }
 
 export function iniciarLaboratorio(raiz: HTMLElement): void {
@@ -103,6 +161,51 @@ export function iniciarLaboratorio(raiz: HTMLElement): void {
     temporizadores.push(window.setTimeout(acao, reduzir ? 0 : ms));
   }
 
+  /**
+   * Propagação simulada: só alterna classes; o atraso de cada nó e aresta vem de --atraso-pulso
+   * (salto × 120 ms). Com movimento reduzido a regra global zera os atrasos e o caminho
+   * inteiro acende de uma vez. O resumo vai para o inspetor (aria-live) só no final.
+   */
+  let fimPropagacao = 0;
+  function propagar(origem: number): void {
+    clearTimeout(fimPropagacao);
+    const distancia = saltos(nos, origem);
+    const alcancados = distancia.filter((d) => d > 0).length;
+    const maximo = Math.max(0, ...distancia);
+    const alcance = dados!.querySelector<HTMLElement>('[data-campo="alcance"]');
+    if (alcance) alcance.textContent = '';
+
+    // Reinicia: tira as classes, força o recálculo e aplica de novo com os novos atrasos.
+    botoes.forEach((b) => b.classList.remove('alcancado'));
+    linhas!.querySelectorAll('line').forEach((l) => l.classList.remove('alcancada'));
+    void mapa!.offsetWidth;
+
+    botoes.forEach((botao, i) => {
+      const d = distancia[i]!;
+      if (d < 1) return;
+      botao.style.setProperty('--atraso-pulso', `${d * SALTO_MS}ms`);
+      botao.classList.add('alcancado');
+    });
+    linhas!.querySelectorAll<SVGLineElement>('line').forEach((linha) => {
+      const a = distancia[Number(linha.dataset.de)]!;
+      const b = distancia[Number(linha.dataset.para)]!;
+      if (a < 0 || b < 0) return;
+      linha.style.setProperty('--atraso-pulso', `${Math.min(a, b) * SALTO_MS + SALTO_MS / 2}ms`);
+      linha.classList.add('alcancada');
+    });
+
+    const ativos = alcancados === 1 ? 'ativo' : 'ativos';
+    const unidade = maximo === 1 ? 'salto' : 'saltos';
+    const resumo = `${alcancados} ${ativos} em ${maximo} ${unidade}`;
+    fimPropagacao = window.setTimeout(
+      () => {
+        if (alcance) alcance.textContent = resumo;
+        registrar(`propagação simulada · ${nos[origem]!.id} · ${resumo}`, true);
+      },
+      reduzir ? 0 : maximo * SALTO_MS + 200,
+    );
+  }
+
   function inspecionar(indice: number): void {
     selecionado = indice;
     const no = nos[indice];
@@ -123,6 +226,7 @@ export function iniciarLaboratorio(raiz: HTMLElement): void {
     }
     registrar(`nó identificado · ${no.id}`);
     if (no.exposicao === 'alta') registrar(`revisão de exposição necessária · ${no.id}`, true);
+    propagar(indice);
   }
 
   function desenhar(): void {
@@ -140,7 +244,8 @@ export function iniciarLaboratorio(raiz: HTMLElement): void {
         linha.setAttribute('y2', String(destino.y));
         linha.setAttribute('pathLength', '1');
         linha.setAttribute('vector-effect', 'non-scaling-stroke');
-        linha.dataset.indice = String(i);
+        linha.dataset.de = String(i);
+        linha.dataset.para = String(j);
         // Cada aresta acende um pouco depois da anterior.
         linha.style.setProperty('--atraso-linha', `${linhas!.childElementCount * 35}ms`);
         linhas!.append(linha);
@@ -154,6 +259,7 @@ export function iniciarLaboratorio(raiz: HTMLElement): void {
       botao.style.top = `${(no.y / 60) * 100}%`;
       botao.setAttribute('aria-pressed', 'false');
       botao.setAttribute('aria-label', `${no.id}, ${no.tipo}, exposição ${no.exposicao}`);
+      if (no.segmento) botao.dataset.segmento = 'sim';
       const rotulo = document.createElement('span');
       rotulo.className = 'lab-no-rotulo';
       rotulo.textContent = no.tipo;

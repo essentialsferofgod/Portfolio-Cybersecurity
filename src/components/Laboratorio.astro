@@ -61,6 +61,7 @@ const VISOES = [
           <div><dt>conexão</dt><dd data-campo="conexao"></dd></div>
           <div><dt>exposição</dt><dd data-campo="exposicao"></dd></div>
           <div><dt>último evento simulado</dt><dd data-campo="evento"></dd></div>
+          <div><dt>alcance simulado</dt><dd data-campo="alcance"></dd></div>
         </dl>
       </div>
     </div>
@@ -226,9 +227,13 @@ const VISOES = [
     stroke-width: 1;
     opacity: 0;
     transition:
-      opacity 240ms steps(3, end),
-      stroke 200ms;
-    transition-delay: var(--atraso-linha, 0ms);
+      opacity 240ms steps(3, end) var(--atraso-linha, 0ms),
+      stroke 120ms steps(2, end) var(--atraso-pulso, 0ms);
+  }
+
+  /* Propagação: arestas e nós alcançados acendem no acento, salto a salto. */
+  .lab-linhas line.alcancada {
+    stroke: var(--color-accent);
   }
 
   .lab-linhas.visivel line {
@@ -248,8 +253,17 @@ const VISOES = [
     opacity: 0;
     transition:
       opacity 200ms steps(2),
-      background-color 160ms,
-      border-color 160ms;
+      background-color 120ms steps(2) var(--atraso-pulso, 0ms),
+      border-color 120ms steps(2) var(--atraso-pulso, 0ms);
+  }
+
+  .lab-no.alcancado {
+    border-color: var(--color-accent);
+  }
+
+  .lab-no.alcancado::before {
+    background-color: var(--color-accent);
+    transition: background-color 120ms steps(2, end) var(--atraso-pulso, 0ms);
   }
 
   .lab-no::before {
