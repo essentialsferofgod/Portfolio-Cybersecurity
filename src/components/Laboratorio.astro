@@ -39,10 +39,17 @@ const VISOES = [
     </div>
 
     <div class="lab-corpo">
+      <div class="lab-area">
       <div class="lab-mapa" data-lab-mapa>
         <span class="lab-varredura" aria-hidden="true"></span>
         <svg class="lab-linhas" data-lab-linhas viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true"></svg>
         <p class="lab-sem-js">A simulação interativa precisa de JavaScript.</p>
+      </div>
+      <ul class="lab-legenda" role="list" aria-label="Legenda de exposição">
+        <li><span class="lab-legenda-marca marca-baixa" aria-hidden="true"></span>baixa</li>
+        <li><span class="lab-legenda-marca marca-media" aria-hidden="true"></span>média</li>
+        <li><span class="lab-legenda-marca marca-alta" aria-hidden="true"></span>alta (sinal !)</li>
+      </ul>
       </div>
 
       <div class="lab-inspetor" aria-live="polite">
@@ -209,20 +216,23 @@ const VISOES = [
     overflow: visible;
   }
 
+  /*
+   * Arestas "desenhadas aos poucos" por opacidade em degraus, escalonada por linha
+   * (--atraso-linha, definido em laboratorio.ts). Sem tracejado: com non-scaling-stroke
+   * o tracejado seria medido em pixels de tela e a linha ficaria fragmentada.
+   */
   .lab-linhas line {
-    stroke: var(--color-detail);
+    stroke: var(--color-traco);
     stroke-width: 1;
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    transition: stroke-dashoffset 900ms steps(12, end), stroke 200ms;
+    opacity: 0;
+    transition:
+      opacity 240ms steps(3, end),
+      stroke 200ms;
+    transition-delay: var(--atraso-linha, 0ms);
   }
 
   .lab-linhas.visivel line {
-    stroke-dashoffset: 0;
-  }
-
-  .lab[data-visao='exposicao'] .lab-linhas line {
-    stroke: var(--color-line);
+    opacity: 1;
   }
 
   .lab-no {
@@ -283,8 +293,13 @@ const VISOES = [
     display: block;
   }
 
+  /* Exposição: baixa = traço discreto; média = miolo claro; alta = vermelho + sinal "!". */
   .lab[data-visao='exposicao'] .exposicao-baixa {
-    opacity: 0.45;
+    border-color: var(--color-traco);
+  }
+
+  .lab[data-visao='exposicao'] .exposicao-baixa::before {
+    background-color: var(--color-traco);
   }
 
   .lab[data-visao='exposicao'] .exposicao-media::before {
@@ -298,6 +313,79 @@ const VISOES = [
   .lab[data-visao='exposicao'] .exposicao-alta::before {
     background-color: var(--color-error);
     animation: piscar 1.06s steps(1) infinite;
+  }
+
+  .lab[data-visao='exposicao'] .exposicao-alta::after,
+  .marca-alta::after {
+    content: '!' / '';
+    position: absolute;
+    top: -1rem;
+    right: -0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--color-error);
+  }
+
+  .lab-legenda {
+    display: none;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    margin: 0 1rem 1rem;
+    color: var(--color-text-muted);
+  }
+
+  .lab[data-visao='exposicao'] .lab-legenda {
+    display: flex;
+  }
+
+  .lab-legenda li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .lab-legenda-marca {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 1rem;
+    height: 1rem;
+    border: 1px solid var(--color-text-muted);
+    background-color: var(--color-bg);
+  }
+
+  .lab-legenda-marca::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background-color: var(--color-text-muted);
+  }
+
+  .marca-baixa {
+    border-color: var(--color-traco);
+  }
+
+  .marca-baixa::before {
+    background-color: var(--color-traco);
+  }
+
+  .marca-media::before {
+    background-color: var(--color-text);
+  }
+
+  .marca-alta {
+    border-color: var(--color-error);
+  }
+
+  .marca-alta::before {
+    background-color: var(--color-error);
+  }
+
+  .marca-alta::after {
+    top: -0.75rem;
+    right: -0.4rem;
+    font-size: 0.6875rem;
   }
 
   .lab-no.pulso {

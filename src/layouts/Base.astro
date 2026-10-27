@@ -11,9 +11,11 @@ interface Props {
   favicon?: string | undefined;
   jsonLd?: object[];
   indexavel?: boolean;
+  /** Imagem de prévia (1200×630). Absoluta quando há domínio; relativa no build local. */
+  imagem?: { src: string; alt: string } | undefined;
 }
 
-const { titulo, descricao, nomeSite, url, favicon, jsonLd = [], indexavel = true } = Astro.props;
+const { titulo, descricao, nomeSite, url, favicon, jsonLd = [], indexavel = true, imagem } = Astro.props;
 ---
 
 <!doctype html>
@@ -34,7 +36,7 @@ const { titulo, descricao, nomeSite, url, favicon, jsonLd = [], indexavel = true
     <link rel="preload" href="/fonts/schibsted-grotesk-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
     {
       favicon ? (
-        <link rel="icon" href={favicon} />
+        <link rel="icon" href={favicon} type={favicon.endsWith('.svg') ? 'image/svg+xml' : undefined} />
       ) : (
         // Sem favicon fornecido: ícone vazio evita o pedido automático a /favicon.ico (404 no console).
         <link rel="icon" href="data:," />
@@ -47,7 +49,19 @@ const { titulo, descricao, nomeSite, url, favicon, jsonLd = [], indexavel = true
     <meta property="og:title" content={titulo} />
     <meta property="og:description" content={descricao} />
     {url && <meta property="og:url" content={url} />}
-    <meta name="twitter:card" content="summary" />
+    {
+      imagem && (
+        <>
+          <meta property="og:image" content={imagem.src} />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta property="og:image:alt" content={imagem.alt} />
+          <meta name="twitter:image" content={imagem.src} />
+          <meta name="twitter:image:alt" content={imagem.alt} />
+        </>
+      )
+    }
+    <meta name="twitter:card" content={imagem ? 'summary_large_image' : 'summary'} />
     <meta name="twitter:title" content={titulo} />
     <meta name="twitter:description" content={descricao} />
 

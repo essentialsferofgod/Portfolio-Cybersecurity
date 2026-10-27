@@ -41,43 +41,49 @@ function iniciarSecaoAtiva(): void {
   const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-link-secao]')];
   const status = document.getElementById('linha-status');
   const textoStatus = status?.querySelector<HTMLElement>('[data-status-secao]');
-  const secoes = [...new Set(links.map((l) => l.dataset.linkSecao))]
-    .map((id) => (id ? document.getElementById(id) : null))
-    .filter((s): s is HTMLElement => s !== null);
+  const caminho = status?.querySelector<HTMLElement>('[data-status-caminho]');
+  const barra = status?.querySelector<HTMLElement>('[data-status-barra]');
+  // Todas as seções numeradas (01 a 09), inclusive as que não estão no menu.
+  const secoes = [...document.querySelectorAll<HTMLElement>('main section[data-secao]')];
   if (secoes.length === 0) return;
 
-  const total = status?.dataset.total ?? secoes.length.toString().padStart(2, '0');
+  const total = status?.dataset.total ?? String(secoes.length).padStart(2, '0');
+  const noMenu = new Set(links.map((l) => l.dataset.linkSecao));
   let atual: string | null | undefined;
 
   // Ativa é a última seção cujo topo já passou de 30% da altura da janela.
   function recalcular(): void {
     const linha = window.innerHeight * 0.3;
-    const ativa = secoes.filter((s) => s.getBoundingClientRect().top <= linha).at(-1) ?? null;
+    const indice = secoes.findLastIndex((s) => s.getBoundingClientRect().top <= linha);
+    const ativa = secoes[indice] ?? null;
     const id = ativa?.id ?? null;
     if (id === atual) return;
     atual = id;
+
+    // Menu: aria-current só no item exato. Seção fora do menu (problema, princípios,
+    // depoimentos) marca, só visualmente, o item do menu anterior mais próximo.
+    const proximo = id && !noMenu.has(id) ? secoes.slice(0, indice).reverse().find((s) => noMenu.has(s.id))?.id : null;
     for (const link of links) {
-      if (link.dataset.linkSecao === id) link.setAttribute('aria-current', 'true');
+      const alvo = link.dataset.linkSecao;
+      if (alvo === id) link.setAttribute('aria-current', 'true');
       else link.removeAttribute('aria-current');
+      link.classList.toggle('secao-proxima', alvo === proximo);
     }
-    // A linha de status só aparece quando há uma seção ativa: no hero ela não teria o que mostrar
-    // e cobriria a área dos CTAs.
-    const link = links.find((l) => l.dataset.linkSecao === id);
+
+    // A linha de status só aparece com uma seção ativa: no hero cobriria a área dos CTAs.
     if (status && textoStatus) {
-      status.hidden = !link;
-      if (link) textoStatus.textContent = `${link.dataset.numero}/${total} ${link.dataset.rotulo}`;
+      status.hidden = !ativa;
+      if (ativa) textoStatus.textContent = `${ativa.dataset.numero}/${total} ${ativa.dataset.rotulo}`;
       if (caminho) caminho.textContent = id ? `${caminho.dataset.base}/${id}` : (caminho.dataset.base ?? '');
     }
   }
 
   // Barra ASCII de progresso da rolagem: [██████░░░░░░]  42%
-  const caminho = status?.querySelector<HTMLElement>('[data-status-caminho]');
-  const barra = status?.querySelector<HTMLElement>('[data-status-barra]');
   const SEGMENTOS = 16;
   function progresso(): void {
     if (!barra) return;
-    const total = document.documentElement.scrollHeight - innerHeight;
-    const fracao = total > 0 ? Math.min(1, scrollY / total) : 0;
+    const altura = document.documentElement.scrollHeight - innerHeight;
+    const fracao = altura > 0 ? Math.min(1, scrollY / altura) : 0;
     const cheios = Math.round(fracao * SEGMENTOS);
     barra.textContent = `[${'█'.repeat(cheios)}${'░'.repeat(SEGMENTOS - cheios)}] ${String(Math.round(fracao * 100)).padStart(3)}%`;
   }

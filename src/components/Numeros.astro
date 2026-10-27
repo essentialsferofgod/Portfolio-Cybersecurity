@@ -1,5 +1,8 @@
 ---
-/** Números de destaque com contagem e barra ASCII que enche ao entrar na tela (efeitos.ts). */
+/**
+ * Números de destaque com contagem ao entrar na tela (efeitos.ts). A barra ASCII só
+ * aparece em percentuais: comparar "150+ diagnósticos" com "8 anos" numa barra enganaria.
+ */
 import type { Organizacao } from '../content/schema.ts';
 import Texto from './Texto.astro';
 
@@ -8,7 +11,6 @@ interface Props {
 }
 
 const { dados } = Astro.props;
-const maior = Math.max(...dados.numeros.map((n) => n.valor), 1);
 ---
 
 <section class="mt-(--espaco-secao)" aria-labelledby="numeros-titulo">
@@ -29,9 +31,11 @@ const maior = Math.max(...dados.numeros.map((n) => n.valor), 1);
                 <span data-contar={n.valor}>{n.valor.toLocaleString('pt-BR')}</span>
                 {n.sufixo}
               </span>
-              <span class="barra" aria-hidden="true" data-nivel={Math.max(8, Math.round((n.valor / maior) * 100))}>
-                <span />
-              </span>
+              {n.sufixo === '%' && (
+                <span class="barra" aria-hidden="true" data-nivel={Math.min(100, n.valor)}>
+                  <span />
+                </span>
+              )}
             </dd>
           </div>
         ))

@@ -39,7 +39,8 @@ function sorteador(semente: number): () => number {
 function gerarRede(semente: number): No[] {
   const aleatorio = sorteador(semente);
   const nos: No[] = [
-    { id: 'GW-0001', tipo: 'gateway', x: 50, y: 30, exposicao: 'média', conexao: 'estabelecida', evento: '—', ligacoes: [] },
+    // O gateway é o ponto central: não gera sinais próprios, e o inspetor diz isso.
+    { id: 'GW-0001', tipo: 'gateway', x: 50, y: 30, exposicao: 'média', conexao: 'estabelecida', evento: 'sem eventos próprios · ponto central da rede', ligacoes: [] },
   ];
   for (let linha = 0; linha < 3; linha++) {
     for (let coluna = 0; coluna < 5; coluna++) {
@@ -140,6 +141,8 @@ export function iniciarLaboratorio(raiz: HTMLElement): void {
         linha.setAttribute('pathLength', '1');
         linha.setAttribute('vector-effect', 'non-scaling-stroke');
         linha.dataset.indice = String(i);
+        // Cada aresta acende um pouco depois da anterior.
+        linha.style.setProperty('--atraso-linha', `${linhas!.childElementCount * 35}ms`);
         linhas!.append(linha);
       }
     });

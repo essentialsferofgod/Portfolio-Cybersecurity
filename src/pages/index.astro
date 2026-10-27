@@ -31,6 +31,9 @@ const site = urlDoSite(dados);
   url={site ? `${site}/` : undefined}
   favicon={dados.marca.favicon}
   jsonLd={dadosEstruturados(conteudo, site)}
+  imagem={dados.marca.imagemSocial
+    ? { src: site ? `${site}${dados.marca.imagemSocial}` : dados.marca.imagemSocial, alt: dados.marca.imagemSocialAlt ?? dados.nome }
+    : undefined}
 >
   <Header nome={dados.nome} secoes={conteudo.secoes} logo={dados.marca.logo} />
   <main id="conteudo" tabindex="-1" class="focus:outline-none">

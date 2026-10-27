@@ -9,22 +9,31 @@ export function cortar(texto: string, limite: number): string {
   return `${(ultimoEspaco > limite * 0.6 ? corte.slice(0, ultimoEspaco) : corte).replace(/[\s,.;:—-]+$/, '')}…`;
 }
 
-/** `<nome> — <proposta resumida>`, com até 60 caracteres. */
+/**
+ * Título com até 60 caracteres, sempre completo: `seo.titulo` se existir; senão
+ * `<nome> — <proposta>` quando couber inteiro; senão só o nome. Nunca corta com "…".
+ */
 export function tituloPagina(d: Organizacao): string {
-  const prefixo = `${d.nome} — `;
-  const espaco = 60 - prefixo.length;
-  if (espaco < 12) return cortar(d.nome, 60);
-  return prefixo + cortar(d.propostaDeValor.replace(/\.$/, ''), espaco);
+  if (d.seo?.titulo) return d.seo.titulo;
+  const completo = `${d.nome} — ${d.propostaDeValor.replace(/\.$/, '')}`;
+  return completo.length <= 60 ? completo : d.nome;
 }
 
-/** A partir do subtítulo (ou da proposta de valor), com até 155 caracteres. */
+/** Descrição com até 155 caracteres, sempre uma frase inteira (sem "…"). */
 export function descricaoPagina(d: Organizacao): string {
-  return cortar(d.subtitulo ?? d.propostaDeValor, 155);
+  const opcoes = [d.seo?.descricao, d.subtitulo, d.propostaDeValor];
+  return opcoes.find((t): t is string => Boolean(t) && t!.length <= 155) ?? d.nome;
 }
 
-/** Domínio próprio: `siteUrl` em organizacao.ts ou a variável SITE_URL. Sem ele, nada de URL absoluta. */
+/**
+ * URL do site, para canonical, og:url e og:image absolutos. Ordem: `siteUrl` em
+ * organizacao.ts, a variável SITE_URL e, nos builds da Vercel, o domínio de produção
+ * do projeto (VERCEL_PROJECT_PRODUCTION_URL, sem protocolo). Sem nenhum: sem URL absoluta.
+ */
 export function urlDoSite(d: Organizacao): string | undefined {
-  const url = d.siteUrl && !ehPendente(d.siteUrl) ? d.siteUrl : process.env.SITE_URL;
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  const url =
+    d.siteUrl && !ehPendente(d.siteUrl) ? d.siteUrl : (process.env.SITE_URL ?? (vercel ? `https://${vercel}` : undefined));
   return url ? url.replace(/\/+$/, '') : undefined;
 }
 

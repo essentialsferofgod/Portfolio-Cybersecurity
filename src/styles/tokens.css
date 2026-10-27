@@ -13,6 +13,8 @@
   --color-line: #232323;
   /* marcas decorativas; nunca texto nem borda de componente (≈ 3:1) */
   --color-detail: #5c5c5a;
+  /* arestas e bordas discretas de componentes: >= 3:1 sobre --color-surface */
+  --color-traco: #6e6e6b;
   --color-text: #f2f2f0;
   --color-text-muted: #8a8a87;
   /* prompt, caret, CTA principal do hero, anel de foco, seção ativa */

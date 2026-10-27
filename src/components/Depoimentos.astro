@@ -50,6 +50,12 @@ const { secao, dados } = Astro.props;
     gap: 1rem;
   }
 
+  @media (width >= 64rem) {
+    .depoimentos {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
   .depoimento {
     display: flex;
     flex-direction: column;
