@@ -33,10 +33,15 @@ describe('portão de publicação (V03)', () => {
     expect(erros[0]).toMatch(/FIXTURE="completo"/);
   });
 
-  it('falha com os dados atuais de organizacao.ts, que têm PENDENTE', () => {
-    const { erros } = verificarPortao(organizacao, semFixture);
+  it('falha com campos PENDENTE', () => {
+    const dados = { ...completos, nome: 'PENDENTE: nome', contato: { email: 'PENDENTE: e-mail' } };
+    const { erros } = verificarPortao(dados, semFixture);
     expect(erros.some((e) => e.startsWith('nome: PENDENTE:'))).toBe(true);
     expect(erros.some((e) => e.startsWith('contato.email: PENDENTE:'))).toBe(true);
+  });
+
+  it('os dados atuais de organizacao.ts passam no portão', () => {
+    expect(verificarPortao(organizacao, semFixture).erros).toEqual([]);
   });
 
   it.each(Object.keys(exemplos) as (keyof typeof exemplos)[])('falha com os dados de exemplo "%s" copiados para organizacao.ts', (nome) => {
