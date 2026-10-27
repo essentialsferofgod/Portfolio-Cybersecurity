@@ -566,26 +566,3 @@
   letter-spacing: -0.02em;
   text-wrap: balance;
 }
-
-/* Título de seção focado pelo terminal: anel visível, sem deslocar o layout. */
-h2[tabindex='-1']:focus-visible {
-  outline-offset: 6px;
-}
-
-.atalho-barra {
-  color: var(--color-text-muted);
-}
-
-@media (pointer: coarse) {
-  .atalho-barra {
-    display: none;
-  }
-}
-
-/* Metodologia fixada: o título acompanha o palco preso (mesma linha da grade do trilho). */
-@media (width >= 64rem) and (prefers-reduced-motion: no-preference) {
-  .js #abordagem h2 {
-    position: sticky;
-    top: calc(var(--altura-cabecalho) + 1.5rem);
-  }
-}

@@ -3,8 +3,7 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 
 // SITE_URL só existe quando houver domínio próprio (seção 12).
-const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-const site = process.env.SITE_URL || (vercel ? `https://${vercel}` : undefined);
+const site = process.env.SITE_URL || undefined;
 
 export default defineConfig({
   site,

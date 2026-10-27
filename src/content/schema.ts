@@ -121,16 +121,11 @@ export const organizacaoSchema = z.object({
       /** Caminho, dentro de public/, de um arquivo fornecido pela organização. */
       logo: texto.optional(),
       favicon: texto.optional(),
-      /** Imagem de prévia para redes (1200×630), caminho dentro de public/. */
-      imagemSocial: texto.optional(),
-      imagemSocialAlt: texto.optional(),
       cores: z.record(z.string(), z.string()).optional(),
       fontes: z.record(z.string(), z.string()).optional(),
     })
     .default({}),
   siteUrl: urlHttps.optional(),
-  /** Título (≤ 60) e descrição (≤ 155) escritos para buscadores e prévias de link, completos. */
-  seo: z.object({ titulo: z.string().trim().min(1).max(60), descricao: z.string().trim().min(1).max(155) }).optional(),
 }).superRefine((d, ctx) => {
   // O próximo passo de um serviço só pode apontar para um canal que exista.
   d.servicos.forEach((s, i) => {

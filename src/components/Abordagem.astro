@@ -1,9 +1,8 @@
 ---
 /**
- * Metodologia. A lista ordenada é o conteúdo (vertical no celular, sem JS e com movimento
- * reduzido). A partir de 1024 px, uma órbita decorativa (orbita.ts) gira as etapas em volta
- * de um painel de terminal. Sem movimento reduzido, o palco fica preso (sticky) num trilho
- * de ~250vh e a rolagem conduz órbita, lista e cartão (até ~2 telas de rolagem presa).
+ * 02 Abordagem. A lista ordenada é o conteúdo (vertical no celular e sem JS).
+ * A partir de 1024 px, uma órbita decorativa (orbita.ts) gira as etapas em volta de um
+ * painel de terminal; a etapa ativa acompanha a rolagem e destaca o item da lista.
  */
 import type { SecaoNumerada } from '../content/comandos.ts';
 import type { Organizacao } from '../content/schema.ts';
@@ -21,8 +20,7 @@ const primeira = dados.abordagem[0];
 ---
 
 <Secao secao={secao}>
-  <div class="trilho" data-trilho>
-  <div class="abordagem palco" data-palco>
+  <div class="abordagem">
     <div class="orbita" aria-hidden="true" data-orbita>
       <span class="anel"></span>
       <span class="anel anel-interno"></span>
@@ -58,7 +56,6 @@ const primeira = dados.abordagem[0];
       }
     </ol>
   </div>
-  </div>
 </Secao>
 
 <script>
@@ -72,36 +69,6 @@ const primeira = dados.abordagem[0];
   .abordagem {
     display: grid;
     gap: 3rem;
-  }
-
-  /* Trilho e palco preso: só no desktop, com JS e sem movimento reduzido. */
-  @media (width >= 64rem) and (prefers-reduced-motion: no-preference) {
-    :global(.js) .trilho {
-      height: 250vh;
-    }
-
-    :global(.js) .palco {
-      position: sticky;
-      top: calc(var(--altura-cabecalho) + 1.5rem);
-      min-height: calc(100vh - var(--altura-cabecalho) - 5rem);
-      align-content: center;
-    }
-  }
-
-  .etapa :global(.etapa-botao) {
-    display: block;
-    width: 100%;
-    text-align: left;
-    font: inherit;
-    color: inherit;
-    letter-spacing: inherit;
-    cursor: pointer;
-  }
-
-  .etapa :global(.etapa-botao:hover) {
-    color: var(--color-text);
-    text-decoration: underline;
-    text-decoration-color: var(--color-text-muted);
   }
 
   .etapas {

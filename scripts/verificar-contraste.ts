@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 
-type Token = 'bg' | 'surface' | 'line' | 'detail' | 'traco' | 'text' | 'text-muted' | 'accent' | 'error';
+type Token = 'bg' | 'surface' | 'line' | 'detail' | 'text' | 'text-muted' | 'accent' | 'error';
 type Tipo = 'texto' | 'componente' | 'decorativo';
 
 interface Par {
@@ -37,9 +37,6 @@ const PARES: Par[] = [
   { frente: 'text-muted', fundo: 'bg', tipo: 'componente', uso: 'borda do CTA secundário e de campos' },
   { frente: 'text-muted', fundo: 'surface', tipo: 'componente', uso: 'borda do campo e dos chips' },
   { frente: 'accent', fundo: 'bg', tipo: 'componente', uso: 'CTA principal contra o fundo' },
-  { frente: 'traco', fundo: 'surface', tipo: 'componente', uso: 'arestas e nós de baixa exposição do laboratório' },
-  { frente: 'traco', fundo: 'bg', tipo: 'componente', uso: 'borda de nó de baixa exposição' },
-  { frente: 'error', fundo: 'bg', tipo: 'componente', uso: 'borda de nó de alta exposição' },
   { frente: 'line', fundo: 'bg', tipo: 'decorativo', uso: 'filetes' },
   { frente: 'detail', fundo: 'bg', tipo: 'decorativo', uso: 'marcas decorativas' },
 ];

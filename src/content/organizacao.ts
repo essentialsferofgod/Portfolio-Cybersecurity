@@ -221,12 +221,5 @@ export const organizacao = {
   legal: {},
   marca: {
     favicon: '/favicon.svg',
-    imagemSocial: '/og.png',
-    imagemSocialAlt: 'Spike Security: "A invasão começa onde a visibilidade termina." em fundo escuro com pontos verdes.',
-  },
-  seo: {
-    titulo: 'Spike Security — Cibersegurança com visibilidade',
-    descricao:
-      'Demonstração de estúdio de cibersegurança: testes de invasão, inteligência de ameaças e superfície de ataque com prioridades claras.',
   },
 } satisfies OrganizacaoEntrada;

@@ -16,14 +16,7 @@ const idTitulo = `${secao.id}-titulo`;
 const comando = `cat ${secao.id}.md`;
 ---
 
-<section
-  id={secao.id}
-  aria-labelledby={idTitulo}
-  class="mt-(--espaco-secao)"
-  data-secao
-  data-numero={secao.numero}
-  data-rotulo={secao.rotulo}
->
+<section id={secao.id} aria-labelledby={idTitulo} class="mt-(--espaco-secao)">
   <div class="grade">
     <div class="cabecalho-secao col-span-full flex items-center gap-4" data-revelar>
       <p class="rotulo tabular uppercase" aria-hidden="true">{secao.numero} / {secao.rotulo}</p>
@@ -35,7 +28,7 @@ const comando = `cat ${secao.id}.md`;
     <p class="prompt-secao col-span-full mt-4" aria-hidden="true">
       <span class="cifrao">$</span> <span data-digitar={comando}>{comando}</span>
     </p>
-    <h2 id={idTitulo} tabindex="-1" class="text-h2 col-span-full self-start mt-4 lg:col-span-4 lg:mt-8 lg:pr-6" data-revelar>{secao.titulo}</h2>
+    <h2 id={idTitulo} class="text-h2 col-span-full mt-4 lg:col-span-4 lg:mt-8 lg:pr-6" data-revelar>{secao.titulo}</h2>
     <div class="col-span-full mt-10 lg:col-span-8 lg:col-start-5 lg:mt-8" data-revelar data-atraso="120">
       <slot />
     </div>
