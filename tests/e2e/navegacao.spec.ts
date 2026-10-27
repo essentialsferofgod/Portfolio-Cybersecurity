@@ -57,18 +57,42 @@ test('linha de status não aparece abaixo de 1024px', async ({ page }) => {
   await expect(page.locator('#linha-status')).toBeHidden();
 });
 
-test('o terminal não rola a página: links da saída usam âncoras e Voltar retorna', async ({ page }) => {
+test('comandos de seção conduzem a página; o link impresso continua como alternativa', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(COMPLETO);
-  const chip = page.locator('.chip', { hasText: 'services' });
-  await chip.scrollIntoViewIfNeeded();
-  const rolagem = await page.evaluate(() => scrollY);
-  await chip.click();
-  await expect(page.getByRole('log').locator('.bloco')).toHaveCount(1);
-  expect(await page.evaluate(() => scrollY)).toBe(rolagem);
-  await page.getByRole('log').getByRole('link', { name: /ver detalhes em/ }).click();
-  await expect(page).toHaveURL(/#servicos$/);
+  await page.locator('.chip', { hasText: 'lab' }).click();
+  await expect(page.locator('#laboratorio-titulo')).toBeFocused();
+  await expect(page.locator('#laboratorio-titulo')).toBeInViewport();
+  await expect(page.locator('#linha-status')).toContainText('03/10 laboratório');
+  await expect(page.getByRole('log').getByRole('link', { name: /abrir simulação em 03/ })).toHaveAttribute('href', '#laboratorio');
+
+  // Voltar do navegador continua funcionando com os links da saída.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.getByRole('log').getByRole('link', { name: /abrir simulação em/ }).click();
+  await expect(page).toHaveURL(/#laboratorio$/);
   await page.goBack();
   await expect(page).toHaveURL(COMPLETO);
-  expect(await page.evaluate(() => scrollY)).toBe(rolagem);
+});
+
+test('com movimento reduzido, a navegação pelo terminal é instantânea', async ({ browser }) => {
+  const contexto = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 1440, height: 900 } });
+  const page = await contexto.newPage();
+  await page.goto(COMPLETO);
+  await page.locator('.chip', { hasText: 'faq' }).click();
+  // Sem espera de animação: no mesmo instante o título já está focado e visível.
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe('faq-titulo');
+  await expect(page.locator('#faq-titulo')).toBeInViewport();
+  await contexto.close();
+});
+
+test('CTA de um serviço leva ao formulário com a área de interesse pré-selecionada', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(COMPLETO);
+  // No exemplo "completo", o 1º serviço tem destino "contato" (o 2º usa e-mail).
+  const card = page.locator('.servico').nth(0);
+  const titulo = (await card.locator('h3').textContent())!.trim();
+  await card.locator('a.link-acao:visible').click();
+  await expect(page.locator('#f-area')).toBeFocused();
+  await expect(page.locator('#f-area')).toHaveValue(titulo);
+  await expect(page.locator('#f-area')).toBeInViewport();
 });

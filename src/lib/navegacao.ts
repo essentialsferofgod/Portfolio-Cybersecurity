@@ -87,7 +87,17 @@ function iniciarSecaoAtiva(): void {
     const cheios = Math.round(fracao * SEGMENTOS);
     barra.textContent = `[${'█'.repeat(cheios)}${'░'.repeat(SEGMENTOS - cheios)}] ${String(Math.round(fracao * 100)).padStart(3)}%`;
   }
-  addEventListener('scroll', () => requestAnimationFrame(progresso), { passive: true });
+  // Recalcula também a cada rolagem: numa rolagem animada (terminal, CTAs) o observador
+  // dispara no meio do caminho e a seção final poderia ficar sem atualização.
+  addEventListener(
+    'scroll',
+    () =>
+      requestAnimationFrame(() => {
+        progresso();
+        recalcular();
+      }),
+    { passive: true },
+  );
   progresso();
 
   // O observador só dispara quando uma seção cruza a faixa de 30%; o cálculo usa a posição real.

@@ -11,6 +11,9 @@ interface Props {
 
 const { servico, dados } = Astro.props;
 const passo = linkProximoPasso(servico.proximoPasso, dados);
+// Com o formulário de demonstração, o CTA leva até ele já com a área deste serviço
+// (formulario.ts). Sem JS, segue para a seção de contato.
+const area = passo.canal === null && dados.formularioDemo ? servico.titulo : undefined;
 ---
 
 <dl class="pares">
@@ -37,8 +40,9 @@ const passo = linkProximoPasso(servico.proximoPasso, dados);
     <dd>
       {
         passo.href ? (
-          <a href={passo.href} class="link-acao">
+          <a href={passo.href} class="link-acao" data-area={area}>
             {servico.proximoPasso.texto}
+            <span class="sr-only"> sobre {servico.titulo}</span>
             {passo.canal && <span class="sr-only">({ACAO_CANAL[passo.canal]})</span>}
             <Seta direcao={passo.externo ? 'diagonal' : 'direita'} />
           </a>

@@ -566,3 +566,18 @@
   letter-spacing: -0.02em;
   text-wrap: balance;
 }
+
+/* Título de seção focado pelo terminal: anel visível, sem deslocar o layout. */
+h2[tabindex='-1']:focus-visible {
+  outline-offset: 6px;
+}
+
+.atalho-barra {
+  color: var(--color-text-muted);
+}
+
+@media (pointer: coarse) {
+  .atalho-barra {
+    display: none;
+  }
+}

@@ -70,27 +70,18 @@ test('terminal: ↓ escolhe, Enter executa, → completa, Esc fecha e limpa, Tab
   await campo.focus();
   const rolagemAntes = await page.evaluate(() => scrollY);
 
-  await page.keyboard.type('serv');
+  // Comando geral (help): imprime e não sai do lugar.
+  await page.keyboard.type('hel');
   await expect(campo).toHaveAttribute('aria-expanded', 'true');
   await expect(page.locator('#terminal-sugestoes').getByRole('option')).toHaveCount(1);
   await page.keyboard.press('ArrowDown');
-  await expect(campo).toHaveAttribute('aria-activedescendant', 'terminal-sugestao-services');
+  await expect(campo).toHaveAttribute('aria-activedescendant', 'terminal-sugestao-help');
   await page.keyboard.press('Enter');
-  await expect(registro.locator('.bloco').last()).toContainText('$ services');
-  await expect(registro.locator('.bloco').last()).toContainText('3 serviços');
+  await expect(registro.locator('.bloco').last()).toContainText('$ help');
   await expect(campo).toHaveValue('');
   await expect(campo).toBeFocused();
   await expect(campo).toHaveAttribute('aria-expanded', 'false');
   expect(await page.evaluate(() => scrollY)).toBe(rolagemAntes);
-
-  // "abo" também casa com approach (alias "abordagem"); "abou", só com about.
-  await page.keyboard.type('abou');
-  await expect(page.locator('#terminal-sugestoes').getByRole('option')).toHaveCount(1);
-  await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('ArrowRight');
-  await expect(campo).toHaveValue('about');
-  await page.keyboard.press('Enter');
-  await expect(registro.locator('.bloco').last()).toContainText('ler mais em 06 / sobre');
 
   await page.keyboard.type('a');
   await expect(campo).toHaveAttribute('aria-expanded', 'true');
@@ -103,6 +94,51 @@ test('terminal: ↓ escolhe, Enter executa, → completa, Esc fecha e limpa, Tab
   await page.keyboard.press('Tab');
   await expect(campo).not.toBeFocused();
   await expect(page.locator('.chip').first()).toBeFocused();
+
+  // Comando de seção: "abo" também casa com approach (alias "abordagem"); "abou", só com about.
+  await campo.focus();
+  await page.keyboard.type('abou');
+  await expect(page.locator('#terminal-sugestoes').getByRole('option')).toHaveCount(1);
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowRight');
+  await expect(campo).toHaveValue('about');
+  await page.keyboard.press('Enter');
+  await expect(registro.locator('.bloco').last()).toContainText('ler mais em 06 / sobre');
+  // Conduz a página: rola até a seção, foca o título e a barra de status acompanha.
+  await expect(page.locator('#sobre-titulo')).toBeFocused();
+  await expect(page.locator('#sobre-titulo')).toBeInViewport();
+  await expect(page.locator('#linha-status')).toContainText('06/10 sobre');
+});
+
+test('histórico: ↑ e ↓ com a lista fechada percorrem os comandos já executados', async ({ page }) => {
+  await page.goto(COMPLETO);
+  const campo = page.getByRole('combobox', { name: 'Comando' });
+  for (const comando of ['help', 'clear']) {
+    await campo.fill(comando);
+    await campo.press('Enter');
+  }
+  await campo.focus();
+  await page.keyboard.press('ArrowUp');
+  await expect(campo).toHaveValue('clear');
+  await page.keyboard.press('ArrowUp');
+  await expect(campo).toHaveValue('help');
+  await page.keyboard.press('ArrowDown');
+  await expect(campo).toHaveValue('clear');
+  await page.keyboard.press('ArrowDown');
+  await expect(campo).toHaveValue('');
+});
+
+test('"/" foca o terminal de qualquer ponto, mas não dentro de campos de formulário', async ({ page }) => {
+  await page.goto(COMPLETO);
+  await page.locator('#faq').scrollIntoViewIfNeeded();
+  await page.locator('#faq-1 summary').focus();
+  await page.keyboard.press('/');
+  await expect(page.getByRole('combobox', { name: 'Comando' })).toBeFocused();
+
+  await page.locator('#f-mensagem').focus();
+  await page.keyboard.press('/');
+  await expect(page.locator('#f-mensagem')).toBeFocused();
+  await expect(page.locator('#f-mensagem')).toHaveValue('/');
 });
 
 test('todos os comandos ativos funcionam pelo teclado', async ({ page }) => {

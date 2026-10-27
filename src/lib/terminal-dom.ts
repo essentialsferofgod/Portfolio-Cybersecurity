@@ -1,9 +1,15 @@
 /**
  * Liga o terminal ao DOM (seções 9.4 a 9.8). A lógica de correspondência vem de terminal.ts;
  * as saídas dos comandos chegam prontas em <template data-saida="…">, geradas no build.
- * O terminal nunca rola a página, nunca move o foco sozinho e nunca captura o Tab.
+ * Comandos de seção (services, lab, approach, about, faq, contact) também conduzem a página:
+ * rolam até a seção e focam o título dela; o link impresso na saída continua como alternativa.
+ * Tab nunca é capturado. "/" foca o campo de qualquer ponto, fora de campos de formulário.
+ * ↑/↓ percorrem as sugestões quando a lista está aberta e o histórico quando está fechada.
  */
+import { rolarAte } from './rolagem.ts';
 import { filtrar, resolver, type ComandoBasico } from './terminal.ts';
+
+type ComandoCliente = ComandoBasico & { secao?: string | null };
 
 const LIMITE_BLOCOS = 6;
 
@@ -42,7 +48,9 @@ export function iniciarTerminal(raiz: HTMLElement): void {
   const saida = raiz.querySelector<HTMLElement>('.terminal-saida');
   if (!campo || !formulario || !lista || !registro || !saida) return;
 
-  const comandos = JSON.parse(raiz.dataset.comandos ?? '[]') as ComandoBasico[];
+  const comandos = JSON.parse(raiz.dataset.comandos ?? '[]') as ComandoCliente[];
+  const historico: string[] = [];
+  let posicaoHistorico = 0;
   const modelos = new Map(
     [...raiz.querySelectorAll<HTMLTemplateElement>('template[data-saida]')].map((t) => [t.dataset.saida, t]),
   );
@@ -134,6 +142,12 @@ export function iniciarTerminal(raiz: HTMLElement): void {
       const modelo = modelos.get(resolucao.comando.nome);
       adicionarBloco(eco(entrada.trim()), ...(modelo ? [modelo.content.cloneNode(true)] : []));
       definirEstado('executado');
+      // Leva até a seção e foca o título (tabindex="-1"); a barra de status acompanha a rolagem.
+      const secao = resolucao.comando.secao ? document.getElementById(resolucao.comando.secao) : null;
+      if (secao) {
+        rolarAte(secao, secao.querySelector<HTMLElement>('h2'));
+        return;
+      }
     }
 
     // Se o botão que disparou o comando saiu do DOM (clear, limite de blocos), o foco não se perde.
@@ -143,7 +157,11 @@ export function iniciarTerminal(raiz: HTMLElement): void {
   formulario.addEventListener('submit', (evento) => {
     evento.preventDefault();
     const escolhida = sugestoes[ativa];
-    executar(escolhida ? escolhida.nome : campo.value);
+    const comando = escolhida ? escolhida.nome : campo.value.trim();
+    if (comando && historico.at(-1) !== comando) historico.push(comando);
+    if (historico.length > 30) historico.shift();
+    posicaoHistorico = historico.length;
+    executar(comando);
     campo.value = '';
     fecharSugestoes();
   });
@@ -158,7 +176,18 @@ export function iniciarTerminal(raiz: HTMLElement): void {
     switch (evento.key) {
       case 'ArrowDown':
       case 'ArrowUp':
-        if (!aberta) return;
+        if (!aberta) {
+          // Lista fechada: histórico de comandos.
+          if (historico.length === 0) return;
+          evento.preventDefault();
+          posicaoHistorico = Math.min(
+            historico.length,
+            Math.max(0, posicaoHistorico + (evento.key === 'ArrowUp' ? -1 : 1)),
+          );
+          campo.value = historico[posicaoHistorico] ?? '';
+          campo.setSelectionRange(campo.value.length, campo.value.length);
+          return;
+        }
         evento.preventDefault();
         ativa =
           evento.key === 'ArrowDown'
@@ -206,6 +235,15 @@ export function iniciarTerminal(raiz: HTMLElement): void {
   raiz.addEventListener('click', (evento) => {
     const botao = (evento.target as Element).closest<HTMLButtonElement>('button[data-comando]');
     if (botao?.dataset.comando) executar(botao.dataset.comando);
+  });
+
+  // "/" foca o terminal de qualquer ponto, exceto dentro de campos de formulário.
+  document.addEventListener('keydown', (evento) => {
+    if (evento.key !== '/' || evento.ctrlKey || evento.metaKey || evento.altKey) return;
+    const alvo = evento.target as HTMLElement;
+    if (alvo.closest('input, textarea, select, [contenteditable="true"]')) return;
+    evento.preventDefault();
+    campo.focus();
   });
 
   definirEstado('inicial');

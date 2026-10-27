@@ -2,7 +2,10 @@
  * Formulário de contato DE DEMONSTRAÇÃO: valida os campos e mostra a confirmação, mas não
  * envia nem guarda nada (nenhuma requisição, nada em URL ou armazenamento local).
  * Estados anunciados em role="status"; erros ligados a cada campo por aria-describedby.
+ * Links com data-area (CTAs dos serviços) rolam até o formulário e pré-selecionam a área.
  */
+import { rolarAte } from './rolagem.ts';
+
 export function iniciarFormulario(formulario: HTMLFormElement): void {
   const status = formulario.querySelector<HTMLElement>('[role="status"]');
   const campos = [...formulario.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('[data-obrigatorio]')];
@@ -23,6 +26,18 @@ export function iniciarFormulario(formulario: HTMLFormElement): void {
   }
 
   campos.forEach((campo) => campo.addEventListener('blur', () => validar(campo)));
+
+  const area = formulario.querySelector<HTMLSelectElement>('#f-area');
+  document.addEventListener('click', (evento) => {
+    const link = (evento.target as Element).closest<HTMLAnchorElement>('a[data-area]');
+    if (!link || !area) return;
+    const opcao = [...area.options].find((o) => o.text === link.dataset.area);
+    if (!opcao) return;
+    evento.preventDefault();
+    area.value = opcao.value;
+    area.dispatchEvent(new Event('change', { bubbles: true }));
+    rolarAte(formulario, area);
+  });
 
   formulario.addEventListener('submit', (evento) => {
     evento.preventDefault();

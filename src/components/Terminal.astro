@@ -36,13 +36,13 @@ const atalhos = comandos.flatMap((comando) => {
   const secao = secoes.find((s) => s.id === comando.secao);
   return secao ? [{ comando, secao }] : [];
 });
-const comandosCliente = JSON.stringify(comandos.map(({ nome, aliases, descricao }) => ({ nome, aliases, descricao })));
+const comandosCliente = JSON.stringify(comandos.map(({ nome, aliases, descricao, secao }) => ({ nome, aliases, descricao, secao })));
 const saidas = comandos.filter((c) => c.nome !== 'clear').map((c) => ({ nome: c.nome, linhas: gerarSaida(c.nome, contexto) }));
 ---
 
 <section id="terminal" class="terminal" aria-labelledby="terminal-titulo" data-estado="sem-js" data-comandos={comandosCliente}>
   <h2 id="terminal-titulo" class="sr-only">Terminal de navegação</h2>
-  <p class="terminal-cabecalho" aria-hidden="true">terminal · navegação</p>
+  <p class="terminal-cabecalho" aria-hidden="true"><span>terminal · navegação</span><span class="atalho-barra">/ para focar</span></p>
   <div class="terminal-corpo">
     <div class="terminal-saida" role="group" tabindex="0" aria-label="Saída do terminal">
       <div class="bloco somente-sem-js">
@@ -92,7 +92,8 @@ const saidas = comandos.filter((c) => c.nome !== 'clear').map((c) => ({ nome: c.
       />
       <ul id="terminal-sugestoes" class="sugestoes" role="listbox" aria-label="Sugestões de comando" hidden></ul>
       <p id="terminal-instrucoes" class="sr-only">
-        Digite um comando, como ajuda, e pressione Enter. Todo o conteúdo também está no menu.
+        Digite um comando, como ajuda, e pressione Enter. Comandos de seção levam até a seção. Setas para cima e para baixo
+        percorrem o histórico. Atalho: barra (/) foca este campo. Todo o conteúdo também está no menu.
       </p>
     </form>
 
@@ -140,6 +141,9 @@ const saidas = comandos.filter((c) => c.nome !== 'clear').map((c) => ({ nome: c.
   }
 
   .terminal-cabecalho {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
     padding: 0.625rem 1rem;
     border-bottom: 1px solid var(--color-line);
     font-size: var(--text-rotulo);
